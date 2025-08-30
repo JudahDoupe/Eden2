@@ -1,0 +1,15 @@
+{
+  "name": "eden2",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "eden2_bg.wasm",
+    "eden2.js",
+    "eden2.d.ts"
+  ],
+  "main": "eden2.js",
+  "types": "eden2.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

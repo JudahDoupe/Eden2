@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eden2 - Ecosystem Card Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #4a9eff;
+            z-index: 1000;
+        }
+        
+        .error {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff6b6b;
+            text-align: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+        
+        #bevy {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            background: #1a1a1a;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <p>Building Your World</p>
+    </div>
+    
+    <div id="error" class="error" style="display: none;">
+        <p>Failed to load the game. Please check the console for details.</p>
+    </div>
+    
+    <canvas id="bevy" style="display: none;"></canvas>
+
+    <script type="module">
+        let canvas = null;
+        
+        function resizeCanvas() {
+            if (canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                canvas.style.width = window.innerWidth + 'px';
+                canvas.style.height = window.innerHeight + 'px';
+            }
+        }
+        
+        async function init() {
+            try {
+                // Get canvas reference
+                canvas = document.getElementById('bevy');
+                
+                // Import and initialize the WASM module
+                const { default: init } = await import('./eden2.js');
+                await init();
+                
+                // Hide loading screen and show canvas
+                document.getElementById('loading').style.display = 'none';
+                canvas.style.display = 'block';
+                
+                // Set initial canvas size
+                resizeCanvas();
+                
+                // Listen for window resize events
+                window.addEventListener('resize', resizeCanvas);
+                
+                console.log('Eden2 game initialized successfully!');
+                
+            } catch (error) {
+                console.error('Failed to initialize Eden2:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+        
+        // Handle browser focus/blur for better performance
+        window.addEventListener('focus', () => {
+            if (canvas) canvas.style.display = 'block';
+        });
+        
+        window.addEventListener('blur', () => {
+            // Keep canvas visible even when window loses focus
+        });
+        
+        init();
+    </script>
+</body>
+</html>
