@@ -22,6 +22,15 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
+REM Copy index.html to web directory
+echo Copying index.html to web directory...
+copy "src\web\index.html" "web\index.html" >nul
+if %ERRORLEVEL% neq 0 (
+    echo ❌ Failed to copy index.html!
+    pause
+    exit /b 1
+)
+
 echo [2/3] Stopping existing deployment...
 docker-compose -f docker\docker-compose.yml down 2>nul
 
