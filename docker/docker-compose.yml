@@ -1,0 +1,11 @@
+services:
+  eden2-web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+    container_name: eden2-game
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
