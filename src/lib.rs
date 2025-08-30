@@ -16,12 +16,14 @@ pub fn create_app(window_config: Window) -> App {
         primary_window: Some(window_config),
         ..default()
     }))
-    .add_systems(Startup, setup)
+    .add_systems(Startup, (setup, initialize_screen_layout).chain())
     .add_systems(Update, (
+        handle_window_resize,
         handle_card_clicks,
         update_resource_display,
         update_species_display,
         update_hand_ui,
+        update_hand_layout,
         update_card_visuals,
     ));
     
@@ -32,7 +34,7 @@ pub fn create_app(window_config: Window) -> App {
 pub fn native_window_config() -> Window {
     Window {
         title: "Eden2 - Ecosystem Card Game".to_string(),
-        resolution: (800.0, 600.0).into(),
+        resolution: (450.0, 1000.0).into(),
         ..default()
     }
 }
@@ -44,6 +46,7 @@ pub fn web_window_config() -> Window {
         title: "Eden2 - Ecosystem Card Game".to_string(),
         canvas: Some("#bevy".to_string()),
         prevent_default_event_handling: false,
+        fit_canvas_to_parent: true,
         ..default()
     }
 }

@@ -9,6 +9,7 @@ pub fn handle_card_clicks(
     card_query: Query<(&Card, &Transform), With<CardSprite>>,
     mut game_state: ResMut<GameState>,
     mut garden_state: ResMut<GardenState>,
+    screen_layout: Res<ScreenLayout>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
@@ -19,9 +20,11 @@ pub fn handle_card_clicks(
 
         if let Some(cursor_pos) = window.cursor_position() {
             if let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
+                let card_size = screen_layout.calculate_card_size(game_state.hand.len());
+                
                 // Check which card was clicked
                 for (card, transform) in card_query.iter() {
-                    if is_point_in_card(world_pos, transform.translation.truncate()) {
+                    if is_point_in_card(world_pos, transform.translation.truncate(), card_size) {
                         // Try to play the card
                         if card.hand_index < game_state.hand.len() {
                             let played_card = game_state.hand[card.hand_index];
@@ -48,8 +51,7 @@ pub fn handle_card_clicks(
 }
 
 // Check if a point is inside a card
-fn is_point_in_card(point: Vec2, card_center: Vec2) -> bool {
-    let card_size = Vec2::new(120.0, 160.0); // Card dimensions
+fn is_point_in_card(point: Vec2, card_center: Vec2, card_size: Vec2) -> bool {
     let half_size = card_size / 2.0;
     
     point.x >= card_center.x - half_size.x &&
@@ -72,43 +74,52 @@ pub fn update_card_visuals(
 }
 
 // Spawn hand UI with cards
-pub fn spawn_hand_ui(commands: &mut Commands, game_state: &GameState) {
-    let card_width = 120.0;
-    let card_height = 160.0;
-    let card_spacing = 140.0;
-    let start_x = -(card_spacing * (game_state.hand.len() as f32 - 1.0)) / 2.0;
-    let card_y = -150.0; // Bottom third of screen
+pub fn spawn_hand_ui(commands: &mut Commands, game_state: &GameState, screen_layout: &ScreenLayout) {
+    let card_size = screen_layout.calculate_card_size(game_state.hand.len());
+    let card_spacing = screen_layout.calculate_card_spacing(game_state.hand.len());
+    let total_width = if game_state.hand.len() > 1 {
+        (card_size.x * game_state.hand.len() as f32) + (card_spacing * (game_state.hand.len() - 1) as f32)
+    } else {
+        card_size.x
+    };
+    let start_x = -total_width / 2.0 + card_size.x / 2.0;
     
     for (index, card_type) in game_state.hand.iter().enumerate() {
-        let x_position = start_x + (index as f32 * card_spacing);
+        let x_position = start_x + (index as f32 * (card_size.x + card_spacing));
         
         // Spawn card background (green rectangle)
-        commands.spawn((
+        let card_entity = commands.spawn((
             Sprite {
                 color: card_type.color(),
-                custom_size: Some(Vec2::new(card_width, card_height)),
+                custom_size: Some(card_size),
                 ..default()
             },
-            Transform::from_translation(Vec3::new(x_position, card_y, 1.0)),
+            Transform::from_translation(Vec3::new(x_position, screen_layout.card_area_y, 1.0)),
             Card {
                 card_type: *card_type,
                 hand_index: index,
                 is_selected: false,
             },
             CardSprite, // Add this marker component for click detection
-        ));
+        )).id();
         
-        // Spawn card title text (white text at top of card)
-        commands.spawn((
+        // Calculate text size based on card size
+        let text_size = screen_layout.text_font_size(FontSizeClass::Small);
+        
+        // Spawn card title text as a child of the card sprite
+        let text_entity = commands.spawn((
             Text2d::new(card_type.name()),
             TextFont {
-                font_size: 14.0,
+                font_size: text_size,
                 ..default()
             },
             TextColor(Color::WHITE),
-            Transform::from_translation(Vec3::new(x_position, card_y + 60.0, 2.0)), // Top of card
+            Transform::from_translation(Vec3::new(0.0, card_size.y * 0.3, 1.0)), // Relative to parent card
             CardText,
-        ));
+        )).id();
+        
+        // Make text a child of the card
+        commands.entity(card_entity).add_child(text_entity);
     }
 }
 
@@ -116,19 +127,17 @@ pub fn spawn_hand_ui(commands: &mut Commands, game_state: &GameState) {
 pub fn update_hand_ui(
     mut commands: Commands,
     game_state: Res<GameState>,
+    screen_layout: Res<ScreenLayout>,
     card_query: Query<Entity, With<CardSprite>>,
-    text_query: Query<Entity, With<CardText>>,
 ) {
+    // Handle card updates when game state changes
     if game_state.is_changed() {
-        // Remove old cards and text
+        // Remove old cards (children text will be automatically removed)
         for entity in card_query.iter() {
-            commands.entity(entity).despawn();
-        }
-        for entity in text_query.iter() {
-            commands.entity(entity).despawn();
+            commands.entity(entity).despawn(); // Automatically recursive in Bevy 0.16
         }
         
         // Spawn new hand
-        spawn_hand_ui(&mut commands, &game_state);
+        spawn_hand_ui(&mut commands, &game_state, &screen_layout);
     }
 }
