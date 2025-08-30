@@ -1,29 +1,22 @@
 use bevy::prelude::*;
-use crate::types::{TileType, CardType};
+use crate::types::{ResourceType, CardType, PlantType};
+use std::collections::HashMap;
 
 #[derive(Component)]
-pub struct Tile {
-    pub x: usize,
-    pub y: usize,
-    pub tile_type: TileType,
-    pub is_hovered: bool,
-}
+pub struct GardenText;
 
 #[derive(Component)]
-pub struct TileSprite;
+pub struct ResourceDisplayText;
 
 #[derive(Component)]
-pub struct TileBorder;
+pub struct SpeciesDisplayText;
 
-#[derive(Component)]
-pub struct StatsText;
-
+// Card components
 #[derive(Component)]
 pub struct Card {
     pub card_type: CardType,
     pub hand_index: usize,
     pub is_selected: bool,
-    pub is_hovered: bool,
 }
 
 #[derive(Component)]
@@ -32,10 +25,74 @@ pub struct CardSprite;
 #[derive(Component)]
 pub struct CardText;
 
-#[derive(Component)]
-pub struct HandUI;
-
+// Simple garden state with just resources and plants
 #[derive(Resource)]
+pub struct GardenState {
+    pub resources: HashMap<ResourceType, i32>,
+    pub plants: Vec<PlantType>,
+}
+
+impl Default for GardenState {
+    fn default() -> Self {
+        let mut resources = HashMap::new();
+        resources.insert(ResourceType::Water, 5);
+        resources.insert(ResourceType::Sunlight, 5);
+        resources.insert(ResourceType::Nutrients, 5);
+        
+        Self {
+            resources,
+            plants: Vec::new(),
+        }
+    }
+}
+
+impl GardenState {
+    pub fn get_resource(&self, resource_type: ResourceType) -> i32 {
+        self.resources.get(&resource_type).copied().unwrap_or(0)
+    }
+    
+    pub fn modify_resource(&mut self, resource_type: ResourceType, change: i32) {
+        let current = self.get_resource(resource_type);
+        let new_value = (current + change).max(0); // Don't go below 0
+        self.resources.insert(resource_type, new_value);
+    }
+    
+    pub fn can_afford(&self, requirements: &HashMap<ResourceType, i32>) -> bool {
+        for (resource_type, amount) in requirements {
+            if self.get_resource(*resource_type) < *amount {
+                return false;
+            }
+        }
+        true
+    }
+    
+    pub fn add_plant(&mut self, plant_type: PlantType) -> bool {
+        let requirements = plant_type.required_resources();
+        
+        if self.can_afford(&requirements) {
+            // Pay the costs
+            for (resource_type, amount) in requirements {
+                self.modify_resource(resource_type, -amount);
+            }
+            
+            // Add the plant
+            self.plants.push(plant_type);
+            
+            // Apply the benefits
+            let production = plant_type.produced_resources();
+            for (resource_type, amount) in production {
+                self.modify_resource(resource_type, amount);
+            }
+            
+            true
+        } else {
+            false
+        }
+    }
+}
+
+// Game state for cards
+#[derive(Resource, Clone)]
 pub struct GameState {
     pub deck: Vec<CardType>,
     pub hand: Vec<CardType>,
@@ -44,14 +101,14 @@ pub struct GameState {
 
 impl Default for GameState {
     fn default() -> Self {
-        // Create a deck with multiple copies of each card type
-        let mut deck = Vec::new();
-        for _ in 0..5 {
-            deck.push(CardType::PlantSeed);
-            deck.push(CardType::Irrigate);
-            deck.push(CardType::GrowForest);
-            deck.push(CardType::ClearLand);
-        }
+        // Create a simple deck with 5 cards (will be drawn to start with 3 in hand, 2 in deck)
+        let deck = vec![
+            CardType::Plant(PlantType::Grass),
+            CardType::Plant(PlantType::Flower),
+            CardType::Plant(PlantType::Tree),
+            CardType::Plant(PlantType::Bush),
+            CardType::Plant(PlantType::Moss),
+        ];
         
         Self {
             deck,
@@ -64,8 +121,7 @@ impl Default for GameState {
 impl GameState {
     pub fn draw_card(&mut self) -> Option<CardType> {
         if !self.deck.is_empty() {
-            let index = fastrand::usize(..self.deck.len());
-            Some(self.deck.remove(index))
+            Some(self.deck.remove(0))
         } else {
             None
         }
@@ -87,19 +143,12 @@ impl GameState {
             // Draw a new card to replace the played one, if deck isn't empty
             if let Some(new_card) = self.draw_card() {
                 self.hand.push(new_card);
-            } else {
-                // If deck is empty, game ends gracefully
-                println!("Deck is empty! No more cards to draw.");
             }
             
             Some(played_card)
         } else {
             None
         }
-    }
-    
-    pub fn has_cards(&self) -> bool {
-        !self.hand.is_empty() || !self.deck.is_empty()
     }
     
     pub fn can_play_cards(&self) -> bool {

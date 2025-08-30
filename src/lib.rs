@@ -1,15 +1,53 @@
 pub mod components;
 pub mod systems;
-pub mod constants;
 pub mod types;
 
 pub use components::*;
 pub use systems::*;
-pub use constants::*;
 pub use types::*;
 
-#[cfg(target_arch = "wasm32")]
 use bevy::prelude::*;
+
+// Shared app configuration to ensure consistency between native and web builds
+pub fn create_app(window_config: Window) -> App {
+    let mut app = App::new();
+    
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(window_config),
+        ..default()
+    }))
+    .add_systems(Startup, setup)
+    .add_systems(Update, (
+        handle_card_clicks,
+        update_resource_display,
+        update_species_display,
+        update_hand_ui,
+        update_card_visuals,
+    ));
+    
+    app
+}
+
+// Native window configuration
+pub fn native_window_config() -> Window {
+    Window {
+        title: "Eden2 - Ecosystem Card Game".to_string(),
+        resolution: (800.0, 600.0).into(),
+        ..default()
+    }
+}
+
+// Web window configuration
+#[cfg(target_arch = "wasm32")]
+pub fn web_window_config() -> Window {
+    Window {
+        title: "Eden2 - Ecosystem Card Game".to_string(),
+        canvas: Some("#bevy".to_string()),
+        prevent_default_event_handling: false,
+        ..default()
+    }
+}
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
@@ -19,28 +57,5 @@ pub fn main() {
     console_error_panic_hook::set_once();
     web_sys::console::log_1(&"Eden2 starting...".into());
 
-    App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Eden2 - Ecosystem Card Game".to_string(),
-                canvas: Some("#bevy".to_string()),
-                prevent_default_event_handling: false,
-                ..default()
-            }),
-            ..default()
-        }))
-        .add_systems(Startup, setup)
-        .add_systems(Update, (
-            handle_window_resize,
-            handle_tile_clicks, 
-            handle_tile_hover, 
-            handle_card_clicks,
-            handle_card_hover,
-            update_tile_colors,
-            update_card_visuals,
-            update_hand_ui,
-            check_game_end,
-            update_stats
-        ))
-        .run();
+    create_app(web_window_config()).run();
 }

@@ -1,83 +1,99 @@
 use bevy::prelude::*;
-use crate::{
-    components::*,
-    constants::*,
-    types::TileType,
-    systems::cards::spawn_hand_ui,
-};
+use crate::components::*;
 
 pub fn setup(mut commands: Commands) {
-    // Initialize game state
+    // Spawn camera - needed for any rendering
+    commands.spawn(Camera2d);
+    
+    // Initialize and insert game states
     let mut game_state = GameState::default();
     game_state.draw_initial_hand();
+    let garden_state = GardenState::default();
+    commands.insert_resource(game_state.clone());
+    commands.insert_resource(garden_state);
     
-    // Spawn camera
-    commands.spawn(Camera2d);
+    // Spawn garden background - positioned in top 2/3rds
+    commands.spawn((
+        Sprite {
+            color: Color::srgb(0.2, 0.6, 0.2), // Garden green
+            custom_size: Some(Vec2::new(600.0, 250.0)), // Reduced height for top 2/3rds
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(0.0, 100.0, 0.0)), // Moved up
+    ));
+    
+    // Spawn resource display on the left (adjusted for new garden position)
+    spawn_resource_display(&mut commands);
+    
+    // Spawn species display on the right (adjusted for new garden position)
+    spawn_species_display(&mut commands);
+    
+    // Spawn cards in the bottom third
+    spawn_hand_cards(&mut commands, &game_state);
+}
 
-    // Calculate grid positioning
-    let grid_width = GRID_SIZE as f32 * TILE_SIZE + (GRID_SIZE - 1) as f32 * TILE_SPACING;
-    let start_x = -grid_width / 2.0 + TILE_SIZE / 2.0;
-    let start_y = grid_width / 2.0 - TILE_SIZE / 2.0;
+fn spawn_resource_display(commands: &mut Commands) {
+    commands.spawn((
+        Text2d::new("Resources:\nWater: 5\nSunlight: 5\nNutrients: 5"),
+        TextFont {
+            font_size: 16.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Transform::from_translation(Vec3::new(-250.0, 150.0, 10.0)), // Adjusted for new garden position
+        ResourceDisplayText,
+    ));
+}
 
-    // Spawn tiles
-    for y in 0..GRID_SIZE {
-        for x in 0..GRID_SIZE {
-            spawn_tile(&mut commands, x, y, start_x, start_y);
-        }
+fn spawn_species_display(commands: &mut Commands) {
+    commands.spawn((
+        Text2d::new("Plants:\nNo plants yet"),
+        TextFont {
+            font_size: 16.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Transform::from_translation(Vec3::new(200.0, 150.0, 10.0)), // Adjusted for new garden position
+        SpeciesDisplayText,
+    ));
+}
+
+fn spawn_hand_cards(commands: &mut Commands, game_state: &GameState) {
+    let card_width = 120.0;
+    let card_height = 160.0;
+    let card_spacing = 140.0;
+    let start_x = -(card_spacing * (game_state.hand.len() as f32 - 1.0)) / 2.0;
+    let card_y = -150.0; // Bottom third of screen
+    
+    for (index, card_type) in game_state.hand.iter().enumerate() {
+        let x_position = start_x + (index as f32 * card_spacing);
+        
+        // Spawn card background (green rectangle)
+        commands.spawn((
+            Sprite {
+                color: Color::srgb(0.1, 0.4, 0.1), // Darker green for cards
+                custom_size: Some(Vec2::new(card_width, card_height)),
+                ..default()
+            },
+            Transform::from_translation(Vec3::new(x_position, card_y, 1.0)),
+            Card {
+                card_type: *card_type,
+                hand_index: index,
+                is_selected: false,
+            },
+            CardSprite, // Add this marker component for click detection
+        ));
+        
+        // Spawn card title text (white text at top of card)
+        commands.spawn((
+            Text2d::new(card_type.name()),
+            TextFont {
+                font_size: 14.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            Transform::from_translation(Vec3::new(x_position, card_y + 60.0, 2.0)), // Top of card
+            CardText,
+        ));
     }
-
-    // Spawn hand UI
-    spawn_hand_ui(&mut commands, &game_state);
-
-    // Spawn UI text for ecosystem stats
-    spawn_stats_ui(&mut commands);
-    
-    // Insert game state as resource
-    commands.insert_resource(game_state);
-}
-
-fn spawn_tile(commands: &mut Commands, x: usize, y: usize, start_x: f32, start_y: f32) {
-    let pos_x = start_x + x as f32 * (TILE_SIZE + TILE_SPACING);
-    let pos_y = start_y - y as f32 * (TILE_SIZE + TILE_SPACING);
-
-    // Spawn tile background (border)
-    commands.spawn((
-        Sprite {
-            color: Color::srgb(0.1, 0.1, 0.1),
-            custom_size: Some(Vec2::new(TILE_SIZE + TILE_BORDER_WIDTH * 2.0, TILE_SIZE + TILE_BORDER_WIDTH * 2.0)),
-            ..default()
-        },
-        Transform::from_translation(Vec3::new(pos_x, pos_y, 0.0)),
-        TileBorder,
-    ));
-
-    // Spawn main tile
-    commands.spawn((
-        Sprite {
-            color: TileType::Empty.color(),
-            custom_size: Some(Vec2::new(TILE_SIZE, TILE_SIZE)),
-            ..default()
-        },
-        Transform::from_translation(Vec3::new(pos_x, pos_y, 1.0)),
-        Tile {
-            x,
-            y,
-            tile_type: TileType::Empty,
-            is_hovered: false,
-        },
-        TileSprite,
-    ));
-}
-
-fn spawn_stats_ui(commands: &mut Commands) {
-    // Simplified text spawning for now - will fix once basic compilation works
-    commands.spawn((
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(10.0),
-            left: Val::Px(10.0),
-            ..default()
-        },
-        StatsText,
-    ));
 }

@@ -1,13 +1,14 @@
 use bevy::prelude::*;
 use crate::{
     components::*,
-    constants::*,
     types::CardType,
 };
 
+// Handle clicking cards to play them
 pub fn handle_card_clicks(
-    mut card_query: Query<(&mut Card, &Transform), With<CardSprite>>,
+    card_query: Query<(&Card, &Transform), With<CardSprite>>,
     mut game_state: ResMut<GameState>,
+    mut garden_state: ResMut<GardenState>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
@@ -19,185 +20,115 @@ pub fn handle_card_clicks(
         if let Some(cursor_pos) = window.cursor_position() {
             if let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
                 // Check which card was clicked
-                for (mut card, transform) in card_query.iter_mut() {
+                for (card, transform) in card_query.iter() {
                     if is_point_in_card(world_pos, transform.translation.truncate()) {
-                        // Only allow card selection if hand has cards
-                        if !game_state.can_play_cards() {
-                            println!("No cards available to play!");
-                            return;
-                        }
-                        
-                        // Select/deselect card
-                        if game_state.selected_card_index == Some(card.hand_index) {
-                            game_state.selected_card_index = None;
-                            card.is_selected = false;
-                            println!("Deselected card");
-                        } else {
-                            game_state.selected_card_index = Some(card.hand_index);
-                            card.is_selected = true;
-                            println!("Selected card: {} (index: {})", card.card_type.name(), card.hand_index);
+                        // Try to play the card
+                        if card.hand_index < game_state.hand.len() {
+                            let played_card = game_state.hand[card.hand_index];
+                            
+                            // Try to add the plant to the garden
+                            match played_card {
+                                CardType::Plant(plant_type) => {
+                                    if garden_state.add_plant(plant_type) {
+                                        // Successfully played - now remove from hand and draw new
+                                        game_state.play_card(card.hand_index);
+                                        println!("Played {} successfully!", played_card.name());
+                                    } else {
+                                        println!("Not enough resources to play {}!", played_card.name());
+                                    }
+                                }
+                            }
                         }
                         break;
                     }
                 }
-                
-                // Update selection states for all cards
-                for (mut card, _) in card_query.iter_mut() {
-                    card.is_selected = game_state.selected_card_index == Some(card.hand_index);
-                }
             }
         }
     }
 }
 
-pub fn handle_card_hover(
-    mut card_query: Query<(&mut Card, &Transform), With<CardSprite>>,
-    windows: Query<&Window>,
-    camera_query: Query<(&Camera, &GlobalTransform)>,
-) {
-    let Ok(window) = windows.single() else { return };
-    let Ok((camera, camera_transform)) = camera_query.single() else { return };
-
-    // Reset all hover states
-    for (mut card, _) in card_query.iter_mut() {
-        card.is_hovered = false;
-    }
-
-    if let Some(cursor_pos) = window.cursor_position() {
-        if let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
-            // Check which card is being hovered
-            for (mut card, transform) in card_query.iter_mut() {
-                if is_point_in_card(world_pos, transform.translation.truncate()) {
-                    card.is_hovered = true;
-                    break;
-                }
-            }
-        }
-    }
+// Check if a point is inside a card
+fn is_point_in_card(point: Vec2, card_center: Vec2) -> bool {
+    let card_size = Vec2::new(120.0, 160.0); // Card dimensions
+    let half_size = card_size / 2.0;
+    
+    point.x >= card_center.x - half_size.x &&
+    point.x <= card_center.x + half_size.x &&
+    point.y >= card_center.y - half_size.y &&
+    point.y <= card_center.y + half_size.y
 }
 
+// Update card visuals based on state
 pub fn update_card_visuals(
     mut card_query: Query<(&Card, &mut Sprite), With<CardSprite>>,
 ) {
     for (card, mut sprite) in card_query.iter_mut() {
-        let base_color = card.card_type.color();
-        
-        if card.is_selected {
-            // Make selected cards brighter
-            sprite.color = Color::srgb(
-                (base_color.to_srgba().red + 0.3).min(1.0),
-                (base_color.to_srgba().green + 0.3).min(1.0),
-                (base_color.to_srgba().blue + 0.3).min(1.0),
-            );
-        } else if card.is_hovered {
-            // Make hovered cards slightly brighter
-            sprite.color = Color::srgb(
-                (base_color.to_srgba().red + 0.15).min(1.0),
-                (base_color.to_srgba().green + 0.15).min(1.0),
-                (base_color.to_srgba().blue + 0.15).min(1.0),
-            );
+        sprite.color = if card.is_selected {
+            Color::srgb(1.0, 1.0, 0.8) // Light yellow when selected
         } else {
-            sprite.color = base_color;
-        }
+            card.card_type.color()
+        };
     }
 }
 
+// Spawn hand UI with cards
 pub fn spawn_hand_ui(commands: &mut Commands, game_state: &GameState) {
-    // Don't spawn cards if hand is empty
-    if game_state.hand.is_empty() {
-        return;
-    }
+    let card_width = 120.0;
+    let card_height = 160.0;
+    let card_spacing = 140.0;
+    let start_x = -(card_spacing * (game_state.hand.len() as f32 - 1.0)) / 2.0;
+    let card_y = -150.0; // Bottom third of screen
     
-    // Calculate hand positioning
-    let hand_width = game_state.hand.len() as f32 * CARD_WIDTH + (game_state.hand.len() - 1) as f32 * CARD_SPACING;
-    let start_x = -hand_width / 2.0 + CARD_WIDTH / 2.0;
-
-    for (index, &card_type) in game_state.hand.iter().enumerate() {
-        let pos_x = start_x + index as f32 * (CARD_WIDTH + CARD_SPACING);
+    for (index, card_type) in game_state.hand.iter().enumerate() {
+        let x_position = start_x + (index as f32 * card_spacing);
         
-        spawn_card(commands, card_type, index, pos_x, HAND_Y_OFFSET);
+        // Spawn card background (green rectangle)
+        commands.spawn((
+            Sprite {
+                color: card_type.color(),
+                custom_size: Some(Vec2::new(card_width, card_height)),
+                ..default()
+            },
+            Transform::from_translation(Vec3::new(x_position, card_y, 1.0)),
+            Card {
+                card_type: *card_type,
+                hand_index: index,
+                is_selected: false,
+            },
+            CardSprite, // Add this marker component for click detection
+        ));
+        
+        // Spawn card title text (white text at top of card)
+        commands.spawn((
+            Text2d::new(card_type.name()),
+            TextFont {
+                font_size: 14.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            Transform::from_translation(Vec3::new(x_position, card_y + 60.0, 2.0)), // Top of card
+            CardText,
+        ));
     }
 }
 
+// Update hand UI when cards change
 pub fn update_hand_ui(
     mut commands: Commands,
-    mut game_state: ResMut<GameState>,
-    card_query: Query<Entity, Or<(With<CardSprite>, With<CardText>)>>,
+    game_state: Res<GameState>,
+    card_query: Query<Entity, With<CardSprite>>,
+    text_query: Query<Entity, With<CardText>>,
 ) {
     if game_state.is_changed() {
-        // Clear invalid card selection if hand changed
-        if let Some(selected_index) = game_state.selected_card_index {
-            if selected_index >= game_state.hand.len() {
-                game_state.selected_card_index = None;
-            }
-        }
-        
-        // Despawn all existing cards and text
+        // Remove old cards and text
         for entity in card_query.iter() {
             commands.entity(entity).despawn();
         }
+        for entity in text_query.iter() {
+            commands.entity(entity).despawn();
+        }
         
-        // Respawn cards with updated hand
+        // Spawn new hand
         spawn_hand_ui(&mut commands, &game_state);
     }
-}
-
-pub fn check_game_end(
-    game_state: Res<GameState>,
-) {
-    if game_state.is_changed() && !game_state.has_cards() {
-        println!("Game Over! No more cards available.");
-        println!("Final game state: {} cards in deck, {} cards in hand", 
-            game_state.deck.len(), game_state.hand.len());
-    }
-}
-
-fn spawn_card(commands: &mut Commands, card_type: CardType, hand_index: usize, x: f32, y: f32) {
-    // Spawn card background
-    commands.spawn((
-        Sprite {
-            color: Color::srgb(0.1, 0.1, 0.1),
-            custom_size: Some(Vec2::new(CARD_WIDTH + 4.0, CARD_HEIGHT + 4.0)),
-            ..default()
-        },
-        Transform::from_translation(Vec3::new(x, y, 2.0)),
-    ));
-
-    // Spawn main card
-    commands.spawn((
-        Sprite {
-            color: card_type.color(),
-            custom_size: Some(Vec2::new(CARD_WIDTH, CARD_HEIGHT)),
-            ..default()
-        },
-        Transform::from_translation(Vec3::new(x, y, 3.0)),
-        Card {
-            card_type,
-            hand_index,
-            is_selected: false,
-            is_hovered: false,
-        },
-        CardSprite,
-    ));
-
-    // Spawn card text (using world coordinates)
-    commands.spawn((
-        Text::new(format!("{}\n\n{}", card_type.name(), card_type.description())),
-        Transform::from_translation(Vec3::new(x, y, 4.0)),
-        TextFont {
-            font_size: 12.0,
-            ..default()
-        },
-        TextColor(Color::WHITE),
-        CardText,
-    ));
-}
-
-fn is_point_in_card(point: Vec2, card_pos: Vec2) -> bool {
-    let half_width = CARD_WIDTH / 2.0;
-    let half_height = CARD_HEIGHT / 2.0;
-    point.x >= card_pos.x - half_width
-        && point.x <= card_pos.x + half_width
-        && point.y >= card_pos.y - half_height
-        && point.y <= card_pos.y + half_height
 }

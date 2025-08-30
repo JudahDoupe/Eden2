@@ -1,93 +1,144 @@
 use bevy::prelude::*;
+use std::collections::HashMap;
 
-#[derive(Component, Clone, Copy, PartialEq, Debug)]
-pub enum TileType {
-    Empty,
-    Land,
+// Simple resource types for the game
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub enum ResourceType {
     Water,
-    Forest,
+    Sunlight,
+    Nutrients,
+}
+
+impl ResourceType {
+    pub fn name(&self) -> &'static str {
+        match self {
+            ResourceType::Water => "Water",
+            ResourceType::Sunlight => "Sunlight",
+            ResourceType::Nutrients => "Nutrients",
+        }
+    }
+
+    pub fn all() -> Vec<ResourceType> {
+        vec![
+            ResourceType::Water,
+            ResourceType::Sunlight,
+            ResourceType::Nutrients,
+        ]
+    }
+}
+
+// Simple plant types
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub enum PlantType {
+    Grass,
+    Flower,
+    Tree,
+    Bush,
+    Moss,
+}
+
+impl PlantType {
+    pub fn name(&self) -> &'static str {
+        match self {
+            PlantType::Grass => "Grass",
+            PlantType::Flower => "Flower",
+            PlantType::Tree => "Tree",
+            PlantType::Bush => "Bush",
+            PlantType::Moss => "Moss",
+        }
+    }
+
+    pub fn required_resources(&self) -> HashMap<ResourceType, i32> {
+        let mut requirements = HashMap::new();
+        match self {
+            PlantType::Grass => {
+                requirements.insert(ResourceType::Water, 1);
+                requirements.insert(ResourceType::Sunlight, 1);
+            },
+            PlantType::Flower => {
+                requirements.insert(ResourceType::Water, 1);
+                requirements.insert(ResourceType::Sunlight, 2);
+                requirements.insert(ResourceType::Nutrients, 1);
+            },
+            PlantType::Tree => {
+                requirements.insert(ResourceType::Water, 3);
+                requirements.insert(ResourceType::Sunlight, 2);
+                requirements.insert(ResourceType::Nutrients, 2);
+            },
+            PlantType::Bush => {
+                requirements.insert(ResourceType::Water, 2);
+                requirements.insert(ResourceType::Sunlight, 1);
+                requirements.insert(ResourceType::Nutrients, 1);
+            },
+            PlantType::Moss => {
+                requirements.insert(ResourceType::Water, 2);
+            },
+        }
+        requirements
+    }
+
+    pub fn produced_resources(&self) -> HashMap<ResourceType, i32> {
+        let mut production = HashMap::new();
+        match self {
+            PlantType::Grass => {
+                production.insert(ResourceType::Nutrients, 1);
+            },
+            PlantType::Flower => {
+                production.insert(ResourceType::Nutrients, 1);
+            },
+            PlantType::Tree => {
+                production.insert(ResourceType::Water, 1);
+                production.insert(ResourceType::Nutrients, 2);
+            },
+            PlantType::Bush => {
+                production.insert(ResourceType::Water, 1);
+                production.insert(ResourceType::Nutrients, 1);
+            },
+            PlantType::Moss => {
+                production.insert(ResourceType::Water, 1);
+            },
+        }
+        production
+    }
+
+    pub fn color(&self) -> Color {
+        match self {
+            PlantType::Grass => Color::srgb(0.4, 0.7, 0.3),
+            PlantType::Flower => Color::srgb(0.9, 0.7, 0.2),
+            PlantType::Tree => Color::srgb(0.2, 0.5, 0.2),
+            PlantType::Bush => Color::srgb(0.5, 0.6, 0.3),
+            PlantType::Moss => Color::srgb(0.3, 0.4, 0.2),
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum CardType {
-    PlantSeed,  // Creates Land
-    Irrigate,   // Creates Water
-    GrowForest, // Creates Forest
-    ClearLand,  // Creates Empty
+    Plant(PlantType),
 }
 
 impl CardType {
     pub fn name(&self) -> &'static str {
         match self {
-            CardType::PlantSeed => "Plant Seed",
-            CardType::Irrigate => "Irrigate", 
-            CardType::GrowForest => "Grow Forest",
-            CardType::ClearLand => "Clear Land",
+            CardType::Plant(plant) => plant.name(),
         }
     }
     
-    pub fn description(&self) -> &'static str {
+    pub fn required_resources(&self) -> HashMap<ResourceType, i32> {
         match self {
-            CardType::PlantSeed => "Turn tile into Land",
-            CardType::Irrigate => "Turn tile into Water",
-            CardType::GrowForest => "Turn tile into Forest", 
-            CardType::ClearLand => "Turn tile into Empty",
+            CardType::Plant(plant) => plant.required_resources(),
         }
     }
     
-    pub fn target_tile_type(&self) -> TileType {
+    pub fn produced_resources(&self) -> HashMap<ResourceType, i32> {
         match self {
-            CardType::PlantSeed => TileType::Land,
-            CardType::Irrigate => TileType::Water,
-            CardType::GrowForest => TileType::Forest,
-            CardType::ClearLand => TileType::Empty,
+            CardType::Plant(plant) => plant.produced_resources(),
         }
     }
     
     pub fn color(&self) -> Color {
         match self {
-            CardType::PlantSeed => Color::srgb(0.6, 0.4, 0.2),   // Brown
-            CardType::Irrigate => Color::srgb(0.2, 0.4, 0.8),    // Blue
-            CardType::GrowForest => Color::srgb(0.2, 0.6, 0.2),  // Green
-            CardType::ClearLand => Color::srgb(0.3, 0.3, 0.3),   // Gray
-        }
-    }
-}
-
-impl TileType {
-    pub fn color(&self) -> Color {
-        match self {
-            TileType::Empty => Color::srgb(0.3, 0.3, 0.3),  // Dark gray
-            TileType::Land => Color::srgb(0.6, 0.4, 0.2),   // Brown
-            TileType::Water => Color::srgb(0.2, 0.4, 0.8),  // Blue
-            TileType::Forest => Color::srgb(0.2, 0.6, 0.2), // Green
-        }
-    }
-    
-    pub fn hover_color(&self) -> Color {
-        match self {
-            TileType::Empty => Color::srgb(0.5, 0.5, 0.5),  // Lighter gray
-            TileType::Land => Color::srgb(0.8, 0.6, 0.4),   // Lighter brown
-            TileType::Water => Color::srgb(0.4, 0.6, 1.0),  // Lighter blue
-            TileType::Forest => Color::srgb(0.4, 0.8, 0.4), // Lighter green
-        }
-    }
-    
-    pub fn name(&self) -> &'static str {
-        match self {
-            TileType::Empty => "Empty",
-            TileType::Land => "Land",
-            TileType::Water => "Water", 
-            TileType::Forest => "Forest",
-        }
-    }
-    
-    pub fn next(&self) -> TileType {
-        match self {
-            TileType::Empty => TileType::Land,
-            TileType::Land => TileType::Water,
-            TileType::Water => TileType::Forest,
-            TileType::Forest => TileType::Empty,
+            CardType::Plant(plant) => plant.color(),
         }
     }
 }
