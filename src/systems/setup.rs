@@ -90,7 +90,7 @@ fn spawn_hand_cards(commands: &mut Commands, game_state: &GameState, screen_layo
 
 fn spawn_resource_display(commands: &mut Commands, screen_layout: &ScreenLayout) -> Entity {    
     commands.spawn((
-        Text2d::new("Resources:\nWater: 5\nSunlight: 5\nNutrients: 5"),
+        Text2d::new("Resources:\nGround Water: 5\nSunlight: 5\nSoil Nutrients: 5\nCO₂: 10\nO₂: 10\nGreen Vegetation: 0\nFruit: 0\nDead Matter: 0\nPlant Population: 0\nAnimal Population: 0\nFungi Population: 0"),
         TextFont {
             font_size: screen_layout.text_font_size(FontSizeClass::Medium),
             ..default()
@@ -103,7 +103,7 @@ fn spawn_resource_display(commands: &mut Commands, screen_layout: &ScreenLayout)
 
 fn spawn_species_display(commands: &mut Commands, screen_layout: &ScreenLayout) -> Entity {    
     commands.spawn((
-        Text2d::new("Plants:\nNo plants yet"),
+        Text2d::new("Species:\nNo species yet"),
         TextFont {
             font_size: screen_layout.text_font_size(FontSizeClass::Medium),
             ..default()

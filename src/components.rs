@@ -1,6 +1,8 @@
 use bevy::prelude::*;
-use crate::types::{ResourceType, CardType, PlantType};
+use crate::types::{ResourceType, CardType, SpeciesType, Kingdom};
 use std::collections::HashMap;
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 #[derive(Component)]
 pub struct GardenText;
@@ -252,23 +254,37 @@ impl ScreenLayout {
     }
 }
 
-// Simple garden state with just resources and plants
+// Simple garden state with resources and species
 #[derive(Resource)]
 pub struct GardenState {
     pub resources: HashMap<ResourceType, i32>,
-    pub plants: Vec<PlantType>,
+    pub species: Vec<SpeciesInstance>,
+}
+
+#[derive(Clone, Debug)]
+pub struct SpeciesInstance {
+    pub species_type: SpeciesType,
+    pub population: u32,
 }
 
 impl Default for GardenState {
     fn default() -> Self {
         let mut resources = HashMap::new();
-        resources.insert(ResourceType::Water, 5);
+        resources.insert(ResourceType::GroundWater, 5);
         resources.insert(ResourceType::Sunlight, 5);
-        resources.insert(ResourceType::Nutrients, 5);
+        resources.insert(ResourceType::SoilNutrients, 5);
+        resources.insert(ResourceType::CO2, 10);
+        resources.insert(ResourceType::O2, 10);
+        resources.insert(ResourceType::GreenVegetation, 0);
+        resources.insert(ResourceType::Fruit, 0);
+        resources.insert(ResourceType::DeadMatter, 0);
+        resources.insert(ResourceType::PlantPopulation, 0);
+        resources.insert(ResourceType::AnimalPopulation, 0);
+        resources.insert(ResourceType::FungiPopulation, 0);
         
         Self {
             resources,
-            plants: Vec::new(),
+            species: Vec::new(),
         }
     }
 }
@@ -283,6 +299,24 @@ impl GardenState {
         let new_value = (current + change).max(0); // Don't go below 0
         self.resources.insert(resource_type, new_value);
     }
+
+    pub fn update_population_counters(&mut self) {
+        let mut plant_pop = 0;
+        let mut animal_pop = 0;
+        let mut fungi_pop = 0;
+
+        for instance in &self.species {
+            match instance.species_type.kingdom() {
+                Kingdom::Plant => plant_pop += instance.population,
+                Kingdom::Animal => animal_pop += instance.population,
+                Kingdom::Fungi => fungi_pop += instance.population,
+            }
+        }
+
+        self.resources.insert(ResourceType::PlantPopulation, plant_pop as i32);
+        self.resources.insert(ResourceType::AnimalPopulation, animal_pop as i32);
+        self.resources.insert(ResourceType::FungiPopulation, fungi_pop as i32);
+    }
     
     pub fn can_afford(&self, requirements: &HashMap<ResourceType, i32>) -> bool {
         for (resource_type, amount) in requirements {
@@ -293,8 +327,8 @@ impl GardenState {
         true
     }
     
-    pub fn add_plant(&mut self, plant_type: PlantType) -> bool {
-        let requirements = plant_type.required_resources();
+    pub fn add_species(&mut self, species_type: SpeciesType) -> bool {
+        let requirements = species_type.daily_consumption();
         
         if self.can_afford(&requirements) {
             // Pay the costs
@@ -302,14 +336,20 @@ impl GardenState {
                 self.modify_resource(resource_type, -amount);
             }
             
-            // Add the plant
-            self.plants.push(plant_type);
+            // Add the species
+            self.species.push(SpeciesInstance {
+                species_type,
+                population: 1,
+            });
             
             // Apply the benefits
-            let production = plant_type.produced_resources();
+            let production = species_type.daily_production();
             for (resource_type, amount) in production {
                 self.modify_resource(resource_type, amount);
             }
+
+            // Update population counters
+            self.update_population_counters();
             
             true
         } else {
@@ -328,14 +368,15 @@ pub struct GameState {
 
 impl Default for GameState {
     fn default() -> Self {
-        // Create a simple deck with 5 cards (will be drawn to start with 3 in hand, 2 in deck)
-        let deck = vec![
-            CardType::Plant(PlantType::Grass),
-            CardType::Plant(PlantType::Flower),
-            CardType::Plant(PlantType::Tree),
-            CardType::Plant(PlantType::Bush),
-            CardType::Plant(PlantType::Moss),
-        ];
+        // Create a deck with all species cards
+        let mut deck: Vec<CardType> = SpeciesType::all()
+            .iter()
+            .map(|&species| CardType::Species(species))
+            .collect();
+        
+        // Randomize the deck
+        let mut rng = thread_rng();
+        deck.shuffle(&mut rng);
         
         Self {
             deck,
@@ -355,7 +396,7 @@ impl GameState {
     }
     
     pub fn draw_initial_hand(&mut self) {
-        for _ in 0..3 {
+        for _ in 0..5 {  // Draw 5 cards for initial hand
             if let Some(card) = self.draw_card() {
                 self.hand.push(card);
             }
@@ -380,5 +421,10 @@ impl GameState {
     
     pub fn can_play_cards(&self) -> bool {
         !self.hand.is_empty()
+    }
+
+    pub fn shuffle_deck(&mut self) {
+        let mut rng = thread_rng();
+        self.deck.shuffle(&mut rng);
     }
 }

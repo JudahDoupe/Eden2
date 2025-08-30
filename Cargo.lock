@@ -1556,6 +1556,7 @@ dependencies = [
  "bevy",
  "console_error_panic_hook",
  "fastrand",
+ "rand",
  "wasm-bindgen",
  "web-sys",
 ]

@@ -45,10 +45,10 @@ pub fn handle_card_clicks(
                     if card.hand_index < game_state.hand.len() {
                         let played_card = game_state.hand[card.hand_index];
                         
-                        // Try to add the plant to the garden
+                        // Try to add the species to the garden
                         match played_card {
-                            CardType::Plant(plant_type) => {
-                                if garden_state.add_plant(plant_type) {
+                            CardType::Species(species_type) => {
+                                if garden_state.add_species(species_type) {
                                     // Successfully played - now remove from hand and draw new
                                     game_state.play_card(card.hand_index);
                                     println!("Played {} successfully!", played_card.name());
