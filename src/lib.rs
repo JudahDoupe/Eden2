@@ -34,7 +34,7 @@ pub fn create_app(window_config: Window) -> App {
 pub fn native_window_config() -> Window {
     Window {
         title: "Eden2 - Ecosystem Card Game".to_string(),
-        resolution: (450.0, 1000.0).into(),
+        resolution: (400.0, 700.0).into(),
         ..default()
     }
 }

@@ -25,10 +25,10 @@ pub fn handle_window_resize(
     mut screen_layout: ResMut<ScreenLayout>,
     mut layout_initialized: ResMut<LayoutInitialized>,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    mut garden_query: Query<&mut Transform, (With<GardenBackground>, Without<ResourceDisplayText>, Without<SpeciesDisplayText>)>,
+    mut garden_query: Query<&mut Transform, With<GardenBackground>>,
+    mut garden_sprite_query: Query<&mut Sprite, With<GardenBackground>>,
     mut resource_query: Query<&mut Transform, (With<ResourceDisplayText>, Without<GardenBackground>, Without<SpeciesDisplayText>)>,
     mut species_query: Query<&mut Transform, (With<SpeciesDisplayText>, Without<GardenBackground>, Without<ResourceDisplayText>)>,
-    mut garden_sprite_query: Query<&mut Sprite, With<GardenBackground>>,
 ) {
     let mut layout_updated = false;
     
@@ -62,59 +62,31 @@ pub fn handle_window_resize(
             sprite.custom_size = Some(screen_layout.garden_area);
         }
         
-        // Update resource text position
+        // Update relative positions of child text elements when garden size changes
         for mut transform in resource_query.iter_mut() {
-            transform.translation = screen_layout.resource_text_position();
+            transform.translation = Vec3::new(
+                -screen_layout.garden_area.x / 3.0,
+                0.0,
+                1.0
+            );
         }
         
-        // Update species text position
         for mut transform in species_query.iter_mut() {
-            transform.translation = screen_layout.species_text_position();
+            transform.translation = Vec3::new(
+                screen_layout.garden_area.x / 3.0,
+                0.0,
+                1.0
+            );
         }
     }
 }
 
-pub fn handle_garden_clicks() {
-    // Placeholder - implement garden click handling if needed
-}
-
-pub fn handle_garden_hover() {
-    // Placeholder - implement garden hover handling if needed
-}
-
-pub fn handle_card_hover() {
-    // Placeholder - implement card hover handling if needed
-}
-
-pub fn update_resource_text() {
-    // Placeholder - implement resource text updates if needed
-}
-
-pub fn update_species_text() {
-    // Placeholder - implement species text updates if needed
-}
-
-pub fn check_game_end() {
-    // Placeholder - implement game end checking if needed
-}
-
-pub fn update_stats() {
-    // Placeholder - implement stats updates if needed
-}
-
 // Update the resource display when garden state changes
 pub fn update_resource_display(
-    mut commands: Commands,
     garden_state: Res<GardenState>,
-    screen_layout: Res<ScreenLayout>,
-    text_query: Query<Entity, With<ResourceDisplayText>>,
+    mut text_query: Query<&mut Text2d, With<ResourceDisplayText>>,
 ) {
     if garden_state.is_changed() {
-        // Remove old text
-        for entity in text_query.iter() {
-            commands.entity(entity).despawn();
-        }
-        
         // Create new resource display text
         let mut resource_text = String::from("Resources:");
         for resource_type in ResourceType::all() {
@@ -122,32 +94,19 @@ pub fn update_resource_display(
             resource_text.push_str(&format!("\n{}: {}", resource_type.name(), amount));
         }
         
-        commands.spawn((
-            Text2d::new(resource_text),
-            TextFont {
-                font_size: screen_layout.text_font_size(FontSizeClass::Medium),
-                ..default()
-            },
-            TextColor(Color::WHITE),
-            Transform::from_translation(screen_layout.resource_text_position()),
-            ResourceDisplayText,
-        ));
+        // Update existing text (entity is created in setup, so it always exists)
+        if let Ok(mut text) = text_query.single_mut() {
+            **text = resource_text;
+        }
     }
 }
 
 // Update the species display when garden state changes
 pub fn update_species_display(
-    mut commands: Commands,
     garden_state: Res<GardenState>,
-    screen_layout: Res<ScreenLayout>,
-    text_query: Query<Entity, With<SpeciesDisplayText>>,
+    mut text_query: Query<&mut Text2d, With<SpeciesDisplayText>>,
 ) {
     if garden_state.is_changed() {
-        // Remove old text
-        for entity in text_query.iter() {
-            commands.entity(entity).despawn();
-        }
-        
         // Create new species display text
         let mut plants_text = String::from("Plants:");
         if garden_state.plants.is_empty() {
@@ -158,16 +117,10 @@ pub fn update_species_display(
             }
         }
         
-        commands.spawn((
-            Text2d::new(plants_text),
-            TextFont {
-                font_size: screen_layout.text_font_size(FontSizeClass::Medium),
-                ..default()
-            },
-            TextColor(Color::WHITE),
-            Transform::from_translation(screen_layout.species_text_position()),
-            SpeciesDisplayText,
-        ));
+        // Update existing text (entity is created in setup, so it always exists)
+        if let Ok(mut text) = text_query.single_mut() {
+            **text = plants_text;
+        }
     }
 }
 
@@ -209,14 +162,11 @@ pub fn update_hand_layout(
 pub fn update_garden_display(
     mut commands: Commands,
     garden_state: Res<GardenState>,
-    text_query: Query<Entity, With<GardenText>>,
+    screen_layout: Res<ScreenLayout>,
+    mut text_query: Query<&mut Text2d, With<GardenText>>,
+    garden_background_query: Query<Entity, With<GardenBackground>>,
 ) {
     if garden_state.is_changed() {
-        // Remove old garden text
-        for entity in text_query.iter() {
-            commands.entity(entity).despawn();
-        }
-        
         // Create resource display text
         let mut resource_text = String::from("Resources:\n");
         for resource_type in ResourceType::all() {
@@ -236,16 +186,26 @@ pub fn update_garden_display(
         
         let full_text = format!("{}{}", resource_text, plants_text);
         
-        // Spawn the text using correct Bevy 0.16 Text2d syntax
-        commands.spawn((
-            Text2d::new(full_text),
-            TextFont {
-                font_size: 18.0,
-                ..default()
-            },
-            TextColor(Color::WHITE),
-            Transform::from_translation(Vec3::new(0.0, 50.0, 10.0)),
-            GardenText,
-        ));
+        // Try to update existing text first
+        if let Ok(mut text) = text_query.single_mut() {
+            **text = full_text;
+        } else {
+            // No existing text, create new one as child of garden background
+            if let Ok(garden_entity) = garden_background_query.single() {
+                let garden_text_entity = commands.spawn((
+                    Text2d::new(full_text),
+                    TextFont {
+                        font_size: screen_layout.text_font_size(FontSizeClass::Medium),
+                        ..default()
+                    },
+                    TextColor(Color::WHITE),
+                    Transform::from_translation(Vec3::new(0.0, 0.0, 1.0)), // Relative to garden center
+                    GardenText,
+                )).id();
+                
+                // Make garden text a child of the garden background
+                commands.entity(garden_entity).add_child(garden_text_entity);
+            }
+        }
     }
 }

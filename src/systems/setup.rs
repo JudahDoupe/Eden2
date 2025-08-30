@@ -17,7 +17,7 @@ pub fn setup(mut commands: Commands) {
     commands.insert_resource(LayoutInitialized::default());
     
     // Spawn garden background - positioned dynamically
-    commands.spawn((
+    let garden_entity = commands.spawn((
         Sprite {
             color: Color::srgb(0.2, 0.6, 0.2), // Garden green
             custom_size: Some(screen_layout.garden_area),
@@ -25,13 +25,15 @@ pub fn setup(mut commands: Commands) {
         },
         Transform::from_translation(Vec3::new(screen_layout.garden_center.x, screen_layout.garden_center.y, 0.0)),
         GardenBackground,
-    ));
+    )).id();
     
-    // Spawn resource display on the left (using dynamic positioning)
-    spawn_resource_display(&mut commands, &screen_layout);
+    // Spawn resource display as child of garden background (left half)
+    let resource_text_entity = spawn_resource_display(&mut commands, &screen_layout);
+    commands.entity(garden_entity).add_child(resource_text_entity);
     
-    // Spawn species display on the right (using dynamic positioning)
-    spawn_species_display(&mut commands, &screen_layout);
+    // Spawn species display as child of garden background (right half)  
+    let species_text_entity = spawn_species_display(&mut commands, &screen_layout);
+    commands.entity(garden_entity).add_child(species_text_entity);
     
     // Re-enable card spawning in setup now that we have proper parent-child relationships
     spawn_hand_cards(&mut commands, &game_state, &screen_layout);
@@ -86,7 +88,7 @@ fn spawn_hand_cards(commands: &mut Commands, game_state: &GameState, screen_layo
     }
 }
 
-fn spawn_resource_display(commands: &mut Commands, screen_layout: &ScreenLayout) {
+fn spawn_resource_display(commands: &mut Commands, screen_layout: &ScreenLayout) -> Entity {    
     commands.spawn((
         Text2d::new("Resources:\nWater: 5\nSunlight: 5\nNutrients: 5"),
         TextFont {
@@ -94,12 +96,12 @@ fn spawn_resource_display(commands: &mut Commands, screen_layout: &ScreenLayout)
             ..default()
         },
         TextColor(Color::WHITE),
-        Transform::from_translation(screen_layout.resource_text_position()),
+        TextLayout::new_with_justify(JustifyText::Left),
         ResourceDisplayText,
-    ));
+    )).id()
 }
 
-fn spawn_species_display(commands: &mut Commands, screen_layout: &ScreenLayout) {
+fn spawn_species_display(commands: &mut Commands, screen_layout: &ScreenLayout) -> Entity {    
     commands.spawn((
         Text2d::new("Plants:\nNo plants yet"),
         TextFont {
@@ -107,7 +109,7 @@ fn spawn_species_display(commands: &mut Commands, screen_layout: &ScreenLayout) 
             ..default()
         },
         TextColor(Color::WHITE),
-        Transform::from_translation(screen_layout.species_text_position()),
+        TextLayout::new_with_justify(JustifyText::Right),
         SpeciesDisplayText,
-    ));
+    )).id()
 }
