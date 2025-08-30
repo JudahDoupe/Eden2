@@ -1,41 +1,6 @@
 use bevy::prelude::*;
-use crate::types::{ResourceType, CardType, SpeciesType, Kingdom};
-use std::collections::HashMap;
-use rand::seq::SliceRandom;
-use rand::thread_rng;
 
-#[derive(Component)]
-pub struct GardenText;
-
-#[derive(Component)]
-pub struct ResourceDisplayText;
-
-#[derive(Component)]
-pub struct SpeciesDisplayText;
-
-// Card components
-#[derive(Component)]
-pub struct Card {
-    pub card_type: CardType,
-    pub hand_index: usize,
-    pub is_selected: bool,
-}
-
-#[derive(Component)]
-pub struct CardSprite;
-
-#[derive(Component)]
-pub struct CardText;
-
-// Flag to track if layout has been initialized to actual window size
-#[derive(Resource, Default)]
-pub struct LayoutInitialized(pub bool);
-
-// Layout components for responsive design
-#[derive(Component)]
-pub struct GardenBackground;
-
-// Responsive sizing utility
+/// Responsive sizing utility for UI elements
 #[derive(Resource, Clone)]
 pub struct ResponsiveSize {
     pub window_size: Vec2,
@@ -124,7 +89,7 @@ pub enum SpacingClass {
     Loose,
 }
 
-// Convenience trait for easy responsive sizing access
+/// Convenience trait for easy responsive sizing access
 pub trait ResponsiveExt {
     fn responsive(&self) -> &ResponsiveSize;
     
@@ -142,6 +107,7 @@ impl ResponsiveExt for ScreenLayout {
     }
 }
 
+/// Screen layout manager for responsive UI positioning
 #[derive(Resource, Clone)]
 pub struct ScreenLayout {
     pub window_size: Vec2,
@@ -251,180 +217,5 @@ impl ScreenLayout {
     
     pub fn ui_spacing(&self, class: SpacingClass) -> f32 {
         self.responsive.spacing(class)
-    }
-}
-
-// Simple garden state with resources and species
-#[derive(Resource)]
-pub struct GardenState {
-    pub resources: HashMap<ResourceType, i32>,
-    pub species: Vec<SpeciesInstance>,
-}
-
-#[derive(Clone, Debug)]
-pub struct SpeciesInstance {
-    pub species_type: SpeciesType,
-    pub population: u32,
-}
-
-impl Default for GardenState {
-    fn default() -> Self {
-        let mut resources = HashMap::new();
-        resources.insert(ResourceType::GroundWater, 5);
-        resources.insert(ResourceType::Sunlight, 5);
-        resources.insert(ResourceType::SoilNutrients, 5);
-        resources.insert(ResourceType::CO2, 10);
-        resources.insert(ResourceType::O2, 10);
-        resources.insert(ResourceType::GreenVegetation, 0);
-        resources.insert(ResourceType::Fruit, 0);
-        resources.insert(ResourceType::DeadMatter, 0);
-        resources.insert(ResourceType::PlantPopulation, 0);
-        resources.insert(ResourceType::AnimalPopulation, 0);
-        resources.insert(ResourceType::FungiPopulation, 0);
-        
-        Self {
-            resources,
-            species: Vec::new(),
-        }
-    }
-}
-
-impl GardenState {
-    pub fn get_resource(&self, resource_type: ResourceType) -> i32 {
-        self.resources.get(&resource_type).copied().unwrap_or(0)
-    }
-    
-    pub fn modify_resource(&mut self, resource_type: ResourceType, change: i32) {
-        let current = self.get_resource(resource_type);
-        let new_value = (current + change).max(0); // Don't go below 0
-        self.resources.insert(resource_type, new_value);
-    }
-
-    pub fn update_population_counters(&mut self) {
-        let mut plant_pop = 0;
-        let mut animal_pop = 0;
-        let mut fungi_pop = 0;
-
-        for instance in &self.species {
-            match instance.species_type.kingdom() {
-                Kingdom::Plant => plant_pop += instance.population,
-                Kingdom::Animal => animal_pop += instance.population,
-                Kingdom::Fungi => fungi_pop += instance.population,
-            }
-        }
-
-        self.resources.insert(ResourceType::PlantPopulation, plant_pop as i32);
-        self.resources.insert(ResourceType::AnimalPopulation, animal_pop as i32);
-        self.resources.insert(ResourceType::FungiPopulation, fungi_pop as i32);
-    }
-    
-    pub fn can_afford(&self, requirements: &HashMap<ResourceType, i32>) -> bool {
-        for (resource_type, amount) in requirements {
-            if self.get_resource(*resource_type) < *amount {
-                return false;
-            }
-        }
-        true
-    }
-    
-    pub fn add_species(&mut self, species_type: SpeciesType) -> bool {
-        let requirements = species_type.daily_consumption();
-        
-        if self.can_afford(&requirements) {
-            // Pay the costs
-            for (resource_type, amount) in requirements {
-                self.modify_resource(resource_type, -amount);
-            }
-            
-            // Add the species
-            self.species.push(SpeciesInstance {
-                species_type,
-                population: 1,
-            });
-            
-            // Apply the benefits
-            let production = species_type.daily_production();
-            for (resource_type, amount) in production {
-                self.modify_resource(resource_type, amount);
-            }
-
-            // Update population counters
-            self.update_population_counters();
-            
-            true
-        } else {
-            false
-        }
-    }
-}
-
-// Game state for cards
-#[derive(Resource, Clone)]
-pub struct GameState {
-    pub deck: Vec<CardType>,
-    pub hand: Vec<CardType>,
-    pub selected_card_index: Option<usize>,
-}
-
-impl Default for GameState {
-    fn default() -> Self {
-        // Create a deck with all species cards
-        let mut deck: Vec<CardType> = SpeciesType::all()
-            .iter()
-            .map(|&species| CardType::Species(species))
-            .collect();
-        
-        // Randomize the deck
-        let mut rng = thread_rng();
-        deck.shuffle(&mut rng);
-        
-        Self {
-            deck,
-            hand: Vec::new(),
-            selected_card_index: None,
-        }
-    }
-}
-
-impl GameState {
-    pub fn draw_card(&mut self) -> Option<CardType> {
-        if !self.deck.is_empty() {
-            Some(self.deck.remove(0))
-        } else {
-            None
-        }
-    }
-    
-    pub fn draw_initial_hand(&mut self) {
-        for _ in 0..5 {  // Draw 5 cards for initial hand
-            if let Some(card) = self.draw_card() {
-                self.hand.push(card);
-            }
-        }
-    }
-    
-    pub fn play_card(&mut self, hand_index: usize) -> Option<CardType> {
-        if hand_index < self.hand.len() {
-            let played_card = self.hand.remove(hand_index);
-            self.selected_card_index = None;
-            
-            // Draw a new card to replace the played one, if deck isn't empty
-            if let Some(new_card) = self.draw_card() {
-                self.hand.push(new_card);
-            }
-            
-            Some(played_card)
-        } else {
-            None
-        }
-    }
-    
-    pub fn can_play_cards(&self) -> bool {
-        !self.hand.is_empty()
-    }
-
-    pub fn shuffle_deck(&mut self) {
-        let mut rng = thread_rng();
-        self.deck.shuffle(&mut rng);
     }
 }

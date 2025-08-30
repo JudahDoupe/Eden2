@@ -1,12 +1,13 @@
-pub mod components;
-pub mod systems;
+pub mod core;
+pub mod ui;
 pub mod types;
 
-pub use components::*;
-pub use systems::*;
 pub use types::*;
 
 use bevy::prelude::*;
+use core::simulation::*;
+use ui::systems::layout::setup_ui;
+use ui::systems::*;
 
 // Shared app configuration to ensure consistency between native and web builds
 pub fn create_app(window_config: Window) -> App {
@@ -16,8 +17,10 @@ pub fn create_app(window_config: Window) -> App {
         primary_window: Some(window_config),
         ..default()
     }))
-    .add_systems(Startup, (setup, initialize_screen_layout).chain())
+    .add_event::<CardPlayEvent>()
+    .add_systems(Startup, (setup_ui, initialize_screen_layout).chain())
     .add_systems(Update, (
+        // UI Systems
         handle_window_resize,
         handle_card_clicks,
         update_resource_display,
@@ -25,6 +28,10 @@ pub fn create_app(window_config: Window) -> App {
         update_hand_ui,
         update_hand_layout,
         update_card_visuals,
+        // Core Game Systems
+        handle_card_play,
+        simulate_ecosystem_step,
+        simulate_resource_changes,
     ));
     
     app
