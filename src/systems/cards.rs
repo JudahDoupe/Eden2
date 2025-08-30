@@ -4,46 +4,61 @@ use crate::{
     types::CardType,
 };
 
-// Handle clicking cards to play them
+// Handle clicking/touching cards to play them
 pub fn handle_card_clicks(
     card_query: Query<(&Card, &Transform), With<CardSprite>>,
     mut game_state: ResMut<GameState>,
     mut garden_state: ResMut<GardenState>,
     screen_layout: Res<ScreenLayout>,
     mouse_input: Res<ButtonInput<MouseButton>>,
+    touches: Res<Touches>,
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
 ) {
+    let Ok(window) = windows.single() else { return };
+    let Ok((camera, camera_transform)) = camera_query.single() else { return };
+    
+    // Handle mouse click
+    let mut interaction_pos = None;
+    
     if mouse_input.just_pressed(MouseButton::Left) {
-        let Ok(window) = windows.single() else { return };
-        let Ok((camera, camera_transform)) = camera_query.single() else { return };
-
         if let Some(cursor_pos) = window.cursor_position() {
-            if let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {
-                let card_size = screen_layout.calculate_card_size(game_state.hand.len());
-                
-                // Check which card was clicked
-                for (card, transform) in card_query.iter() {
-                    if is_point_in_card(world_pos, transform.translation.truncate(), card_size) {
-                        // Try to play the card
-                        if card.hand_index < game_state.hand.len() {
-                            let played_card = game_state.hand[card.hand_index];
-                            
-                            // Try to add the plant to the garden
-                            match played_card {
-                                CardType::Plant(plant_type) => {
-                                    if garden_state.add_plant(plant_type) {
-                                        // Successfully played - now remove from hand and draw new
-                                        game_state.play_card(card.hand_index);
-                                        println!("Played {} successfully!", played_card.name());
-                                    } else {
-                                        println!("Not enough resources to play {}!", played_card.name());
-                                    }
+            interaction_pos = Some(cursor_pos);
+        }
+    }
+    
+    // Handle touch input - check for any touch that just started
+    for touch in touches.iter_just_pressed() {
+        interaction_pos = Some(touch.position());
+        break; // Only handle first touch for simplicity
+    }
+    
+    // Process the interaction if we have a position
+    if let Some(screen_pos) = interaction_pos {
+        if let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, screen_pos) {
+            let card_size = screen_layout.calculate_card_size(game_state.hand.len());
+            
+            // Check which card was clicked/touched
+            for (card, transform) in card_query.iter() {
+                if is_point_in_card(world_pos, transform.translation.truncate(), card_size) {
+                    // Try to play the card
+                    if card.hand_index < game_state.hand.len() {
+                        let played_card = game_state.hand[card.hand_index];
+                        
+                        // Try to add the plant to the garden
+                        match played_card {
+                            CardType::Plant(plant_type) => {
+                                if garden_state.add_plant(plant_type) {
+                                    // Successfully played - now remove from hand and draw new
+                                    game_state.play_card(card.hand_index);
+                                    println!("Played {} successfully!", played_card.name());
+                                } else {
+                                    println!("Not enough resources to play {}!", played_card.name());
                                 }
                             }
                         }
-                        break;
                     }
+                    break;
                 }
             }
         }
