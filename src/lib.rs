@@ -6,20 +6,37 @@ pub use types::*;
 
 use bevy::prelude::*;
 use core::simulation::*;
+use core::simulation_systems;
 use ui::systems::layout::setup_ui;
 use ui::systems::*;
 
-// Shared app configuration to ensure consistency between native and web builds
+/// Creates the main Bevy app with shared configuration for native and web builds
 pub fn create_app(window_config: Window) -> App {
     let mut app = App::new();
     
+    // Add plugins and window configuration
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(window_config),
         ..default()
-    }))
-    .add_event::<CardPlayEvent>()
-    .add_systems(Startup, (setup_ui, initialize_screen_layout).chain())
-    .add_systems(Update, (
+    }));
+    
+    // Register events
+    app.add_event::<CardPlayEvent>();
+    app.add_event::<core::simulation_systems::AddSpeciesEvent>();
+    app.add_event::<core::simulation_systems::TriggerSimulationEvent>();
+    
+    // Add resources
+    app.init_resource::<core::GameState>();
+    
+    // Add startup systems
+    app.add_systems(Startup, (
+        setup_ui,
+        initialize_screen_layout,
+        core::simulation_systems::spawn_garden,
+    ).chain());
+    
+    // Add update systems
+    app.add_systems(Update, (
         // UI Systems
         handle_window_resize,
         handle_card_clicks,
@@ -30,8 +47,10 @@ pub fn create_app(window_config: Window) -> App {
         update_card_visuals,
         // Core Game Systems
         handle_card_play,
-        simulate_ecosystem_step,
-        simulate_resource_changes,
+        // Simulation Systems (order matters!)
+        core::simulation_systems::handle_add_species,
+        core::simulation_systems::trigger_simulation_on_card_play.after(core::simulation_systems::handle_add_species),
+        core::simulation_systems::run_daily_simulation.after(core::simulation_systems::trigger_simulation_on_card_play),
     ));
     
     app

@@ -53,6 +53,27 @@ impl ResourceType {
             ResourceType::FungiPopulation,
         ]
     }
+
+    /// Returns true if this resource should reset to its base value each day
+    /// (renewable resources like sunlight, vs finite resources like nutrients)
+    pub fn is_renewable(&self) -> bool {
+        match self {
+            ResourceType::Sunlight => true,
+            ResourceType::CO2 => true,
+            ResourceType::O2 => true,
+            _ => false,
+        }
+    }
+
+    /// Returns the daily renewable amount for renewable resources
+    pub fn daily_renewable_amount(&self) -> i32 {
+        match self {
+            ResourceType::Sunlight => 5,
+            ResourceType::CO2 => 10,
+            ResourceType::O2 => 10,
+            _ => 0,
+        }
+    }
 }
 
 // All species types from the documentation

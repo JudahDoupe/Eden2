@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use crate::core::simulation::CardPlayEvent;
 use crate::ui::{Card, CardSprite, ScreenLayout};
 
-/// Handle clicking/touching cards to play them
+/// Handles clicking/touching cards to play them
 pub fn handle_card_clicks(
     card_query: Query<(&Card, &Transform), With<CardSprite>>,
     screen_layout: Res<ScreenLayout>,
@@ -12,37 +12,48 @@ pub fn handle_card_clicks(
     camera_query: Query<(&Camera, &GlobalTransform)>,
     mut card_play_events: EventWriter<CardPlayEvent>,
 ) {
+    // Get required components
     let Ok(window) = windows.single() else { return };
     let Ok((camera, camera_transform)) = camera_query.single() else { return };
     
-    // Handle mouse click
-    let mut interaction_pos = None;
+    // Check for user interaction (mouse or touch)
+    let interaction_pos = get_interaction_position(&mouse_input, &touches, &window);
     
-    if mouse_input.just_pressed(MouseButton::Left) {
-        if let Some(cursor_pos) = window.cursor_position() {
-            interaction_pos = Some(cursor_pos);
-        }
-    }
-    
-    // Handle touch input - check for any touch that just started
-    for touch in touches.iter_just_pressed() {
-        interaction_pos = Some(touch.position());
-        break; // Only handle first touch for simplicity
-    }
-    
-    // Process the interaction if we have a position
     if let Some(screen_pos) = interaction_pos {
         if let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, screen_pos) {
-            // Check which card was clicked/touched
-            for (card, transform) in card_query.iter() {
-                if is_point_in_card(world_pos, transform.translation.truncate(), &screen_layout, card.hand_index) {
-                    // Send event to play the card
-                    card_play_events.write(CardPlayEvent {
-                        hand_index: card.hand_index,
-                    });
-                    break;
-                }
-            }
+            handle_card_interaction(world_pos, &card_query, &screen_layout, &mut card_play_events);
+        }
+    }
+}
+
+/// Gets the position of user interaction (mouse click or touch)
+fn get_interaction_position(
+    mouse_input: &ButtonInput<MouseButton>,
+    touches: &Touches,
+    window: &Window,
+) -> Option<Vec2> {
+    // Check for mouse click
+    if mouse_input.just_pressed(MouseButton::Left) {
+        return window.cursor_position();
+    }
+    
+    // Check for touch input (handle first touch only)
+    touches.iter_just_pressed().next().map(|touch| touch.position())
+}
+
+/// Handles interaction with cards at the given world position
+fn handle_card_interaction(
+    world_pos: Vec2,
+    card_query: &Query<(&Card, &Transform), With<CardSprite>>,
+    screen_layout: &ScreenLayout,
+    card_play_events: &mut EventWriter<CardPlayEvent>,
+) {
+    for (card, transform) in card_query.iter() {
+        if is_point_in_card(world_pos, transform.translation.truncate(), screen_layout, card.hand_index) {
+            card_play_events.write(CardPlayEvent {
+                hand_index: card.hand_index,
+            });
+            break;
         }
     }
 }

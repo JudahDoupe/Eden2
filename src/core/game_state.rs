@@ -3,6 +3,8 @@ use crate::types::{CardType, SpeciesType};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
+const INITIAL_HAND_SIZE: usize = 5;
+
 /// Core game state for managing cards, deck, and player hand
 #[derive(Resource, Clone)]
 pub struct GameState {
@@ -40,28 +42,30 @@ impl GameState {
         }
     }
     
+    /// Draws the initial hand of cards for the player
     pub fn draw_initial_hand(&mut self) {
-        for _ in 0..5 {  // Draw 5 cards for initial hand
+        for _ in 0..INITIAL_HAND_SIZE {
             if let Some(card) = self.draw_card() {
                 self.hand.push(card);
             }
         }
     }
     
+    /// Plays a card from the hand at the given index, replacing it with a new card from deck
     pub fn play_card(&mut self, hand_index: usize) -> Option<CardType> {
-        if hand_index < self.hand.len() {
-            let played_card = self.hand.remove(hand_index);
-            self.selected_card_index = None;
-            
-            // Draw a new card to replace the played one, if deck isn't empty
-            if let Some(new_card) = self.draw_card() {
-                self.hand.push(new_card);
-            }
-            
-            Some(played_card)
-        } else {
-            None
+        if hand_index >= self.hand.len() {
+            return None;
         }
+
+        let played_card = self.hand.remove(hand_index);
+        self.selected_card_index = None;
+        
+        // Replace the played card with a new one from the deck
+        if let Some(new_card) = self.draw_card() {
+            self.hand.push(new_card);
+        }
+        
+        Some(played_card)
     }
     
     pub fn can_play_cards(&self) -> bool {

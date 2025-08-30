@@ -66,42 +66,42 @@ impl GardenState {
         self.resources.insert(ResourceType::FungiPopulation, fungi_pop as i32);
     }
     
+    /// Checks if the garden has enough resources to meet the requirements
     pub fn can_afford(&self, requirements: &HashMap<ResourceType, i32>) -> bool {
-        for (resource_type, amount) in requirements {
-            if self.get_resource(*resource_type) < *amount {
-                return false;
-            }
-        }
-        true
+        requirements.iter().all(|(resource_type, amount)| {
+            self.get_resource(*resource_type) >= *amount
+        })
     }
     
+    /// Attempts to add a species to the garden if resources allow
+    /// Returns true if successful, false if insufficient resources
     pub fn add_species(&mut self, species_type: SpeciesType) -> bool {
         let requirements = species_type.daily_consumption();
         
-        if self.can_afford(&requirements) {
-            // Pay the costs
-            for (resource_type, amount) in requirements {
-                self.modify_resource(resource_type, -amount);
-            }
-            
-            // Add the species
-            self.species.push(SpeciesInstance {
-                species_type,
-                population: 1,
-            });
-            
-            // Apply the benefits
-            let production = species_type.daily_production();
-            for (resource_type, amount) in production {
-                self.modify_resource(resource_type, amount);
-            }
-
-            // Update population counters
-            self.update_population_counters();
-            
-            true
-        } else {
-            false
+        if !self.can_afford(&requirements) {
+            return false;
         }
+        
+        // Pay the resource costs
+        for (resource_type, amount) in requirements {
+            self.modify_resource(resource_type, -amount);
+        }
+        
+        // Add the new species instance
+        self.species.push(SpeciesInstance {
+            species_type,
+            population: 1,
+        });
+        
+        // Apply the species' resource production
+        let production = species_type.daily_production();
+        for (resource_type, amount) in production {
+            self.modify_resource(resource_type, amount);
+        }
+
+        // Update population counters to reflect the new species
+        self.update_population_counters();
+        
+        true
     }
 }
