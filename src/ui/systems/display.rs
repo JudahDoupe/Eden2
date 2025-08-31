@@ -37,7 +37,7 @@ pub fn update_species_display(
     } else {
         for species in species_list {
             species_text.push_str(&format!("\n{} ({})", 
-                species.species_type.name(), 
+                species.card.name(), 
                 species.population
             ));
         }

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::core::GameState;
-use crate::ui::{Card, CardSprite, CardText, ScreenLayout, FontSizeClass};
+use crate::ui::{CardComponent, CardSprite, CardText, ScreenLayout, FontSizeClass};
 
 /// Spawn hand UI with cards
 pub fn spawn_hand_cards(commands: &mut Commands, game_state: &GameState, screen_layout: &ScreenLayout) {
@@ -13,19 +13,19 @@ pub fn spawn_hand_cards(commands: &mut Commands, game_state: &GameState, screen_
     };
     let start_x = -total_width / 2.0 + card_size.x / 2.0;
     
-    for (index, card_type) in game_state.hand.iter().enumerate() {
+    for (index, card) in game_state.hand.iter().enumerate() {
         let x_position = start_x + (index as f32 * (card_size.x + card_spacing));
         
         // Spawn card background (green rectangle)
         let card_entity = commands.spawn((
             Sprite {
-                color: card_type.color(),
+                color: card.definition().color,
                 custom_size: Some(card_size),
                 ..default()
             },
             Transform::from_translation(Vec3::new(x_position, screen_layout.card_area_y, 1.0)),
-            Card {
-                card_type: *card_type,
+            CardComponent {
+                card: card.clone(),
                 hand_index: index,
                 is_selected: false,
             },
@@ -37,7 +37,7 @@ pub fn spawn_hand_cards(commands: &mut Commands, game_state: &GameState, screen_
         
         // Spawn card title text as a child of the card sprite
         let text_entity = commands.spawn((
-            Text2d::new(card_type.name()),
+            Text2d::new(card.name()),
             TextFont {
                 font_size: text_size,
                 ..default()
@@ -54,13 +54,13 @@ pub fn spawn_hand_cards(commands: &mut Commands, game_state: &GameState, screen_
 
 /// Update card visuals based on state
 pub fn update_card_visuals(
-    mut card_query: Query<(&Card, &mut Sprite), With<CardSprite>>,
+    mut card_query: Query<(&CardComponent, &mut Sprite), With<CardSprite>>,
 ) {
     for (card, mut sprite) in card_query.iter_mut() {
         sprite.color = if card.is_selected {
             Color::srgb(1.0, 1.0, 0.8) // Light yellow when selected
         } else {
-            card.card_type.color()
+            card.card.definition().color
         };
     }
 }
@@ -86,7 +86,7 @@ pub fn update_hand_ui(
 
 /// Update card positions when screen layout changes
 pub fn update_hand_layout(
-    mut card_query: Query<(&mut Transform, &mut Sprite, &Card), With<CardSprite>>,
+    mut card_query: Query<(&mut Transform, &mut Sprite, &CardComponent), With<CardSprite>>,
     mut text_query: Query<(&mut Transform, &mut TextFont), (With<CardText>, Without<CardSprite>)>,
     screen_layout: Res<ScreenLayout>,
     game_state: Res<GameState>,

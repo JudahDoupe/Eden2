@@ -1,11 +1,11 @@
 use bevy::prelude::*;
-use crate::types::{SpeciesType, ResourceType, Kingdom};
+use crate::types::{Card, ResourceType, Kingdom};
 use crate::ui::components::{Garden, GardenResources, Species, DailyConsumption, DailyProduction, SurvivalRequirements};
 
 /// Event for when a species is added to the garden
 #[derive(Event)]
 pub struct AddSpeciesEvent {
-    pub species_type: SpeciesType,
+    pub card: Card,
 }
 
 /// Event to trigger a simulation update (when cards are played)
@@ -34,12 +34,12 @@ pub fn handle_add_species(
     };
 
     for event in add_species_events.read() {
-        let species_type = event.species_type;
+        let card = event.card.clone();
         
         // Check if garden can afford this species
-        let consumption = species_type.daily_consumption();
+        let consumption = card.definition().daily_consumption.clone();
         if !garden_resources.can_afford(&consumption) {
-            println!("Insufficient resources to add species: {}", species_type.name());
+            println!("Insufficient resources to add species: {}", card.name());
             continue;
         }
 
@@ -47,12 +47,12 @@ pub fn handle_add_species(
         // This allows species to survive their first turn
 
         // Create the species entity with all required components
-        let production = species_type.daily_production();
-        let survival_requirements = species_type.survival_requirements();
+        let production = card.definition().daily_production.clone();
+        let survival_requirements = card.definition().survival_requirements.clone();
 
         commands.spawn((
             Species {
-                species_type,
+                card: card.clone(),
                 population: 1,
             },
             DailyConsumption { consumption },
@@ -64,7 +64,7 @@ pub fn handle_add_species(
             Visibility::default(),
         ));
 
-        println!("Added species: {} to garden", species_type.name());
+        println!("Added species: {} to garden", card.name());
     }
 }
 
@@ -149,7 +149,7 @@ pub fn run_daily_simulation(
     let mut fungi_pop = 0;
 
     for (_, species, _, _, _) in species_query.iter() {
-        match species.species_type.kingdom() {
+        match species.card.definition().kingdom {
             Kingdom::Plant => plant_pop += species.population,
             Kingdom::Animal => animal_pop += species.population,
             Kingdom::Fungi => fungi_pop += species.population,
@@ -197,7 +197,7 @@ pub fn run_daily_simulation(
                 species.population -= 1;
                 println!(
                     "{} population decreased to {} due to: {}",
-                    species.species_type.name(),
+                    species.card.name(),
                     species.population,
                     failure_reason
                 );
@@ -205,17 +205,17 @@ pub fn run_daily_simulation(
                 species_to_remove.push(entity);
                 println!(
                     "{} has died out due to: {}",
-                    species.species_type.name(),
+                    species.card.name(),
                     failure_reason
                 );
             }
-        } else if species.population < species.species_type.max_population() {
+        } else if species.population < species.card.definition().max_population {
             // Species can thrive - potentially grow
             if rand::random::<f32>() < 0.1 { // 10% chance per day
                 species.population += 1;
                 println!(
                     "{} population increased to {}",
-                    species.species_type.name(),
+                    species.card.name(),
                     species.population
                 );
             }

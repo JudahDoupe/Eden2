@@ -6,7 +6,6 @@ pub use types::*;
 
 use bevy::prelude::*;
 use core::simulation::*;
-use core::simulation_systems;
 use ui::systems::layout::setup_ui;
 use ui::systems::*;
 

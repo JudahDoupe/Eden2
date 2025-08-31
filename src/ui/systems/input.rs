@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use crate::core::simulation::CardPlayEvent;
-use crate::ui::{Card, CardSprite, ScreenLayout};
+use crate::ui::{CardComponent, CardSprite, ScreenLayout};
 
 /// Handles clicking/touching cards to play them
 pub fn handle_card_clicks(
-    card_query: Query<(&Card, &Transform), With<CardSprite>>,
+    card_query: Query<(&CardComponent, &Transform), With<CardSprite>>,
     screen_layout: Res<ScreenLayout>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     touches: Res<Touches>,
@@ -44,7 +44,7 @@ fn get_interaction_position(
 /// Handles interaction with cards at the given world position
 fn handle_card_interaction(
     world_pos: Vec2,
-    card_query: &Query<(&Card, &Transform), With<CardSprite>>,
+    card_query: &Query<(&CardComponent, &Transform), With<CardSprite>>,
     screen_layout: &ScreenLayout,
     card_play_events: &mut EventWriter<CardPlayEvent>,
 ) {

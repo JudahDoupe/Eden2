@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::types::{CardType, ResourceType, SpeciesType};
+use crate::types::ResourceType;
 use std::collections::HashMap;
 
 /// UI Component marker for resource display text
@@ -60,7 +60,7 @@ impl GardenResources {
 /// Component representing a species instance in the garden
 #[derive(Component)]
 pub struct Species {
-    pub species_type: SpeciesType,
+    pub card: crate::types::Card,
     pub population: u32,
 }
 
@@ -84,8 +84,8 @@ pub struct SurvivalRequirements {
 
 /// UI Component for card entities
 #[derive(Component)]
-pub struct Card {
-    pub card_type: CardType,
+pub struct CardComponent {
+    pub card: crate::types::Card,
     pub hand_index: usize,
     pub is_selected: bool,
 }

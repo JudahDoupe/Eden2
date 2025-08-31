@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::types::{ResourceType, SpeciesType, Kingdom};
+use crate::types::{ResourceType, Card, Kingdom};
 use std::collections::HashMap;
 
 /// Simple garden state with resources and species
@@ -11,7 +11,7 @@ pub struct GardenState {
 
 #[derive(Clone, Debug)]
 pub struct SpeciesInstance {
-    pub species_type: SpeciesType,
+    pub card: Card,
     pub population: u32,
 }
 
@@ -54,7 +54,7 @@ impl GardenState {
         let mut fungi_pop = 0;
 
         for instance in &self.species {
-            match instance.species_type.kingdom() {
+            match instance.card.definition().kingdom {
                 Kingdom::Plant => plant_pop += instance.population,
                 Kingdom::Animal => animal_pop += instance.population,
                 Kingdom::Fungi => fungi_pop += instance.population,
@@ -75,8 +75,8 @@ impl GardenState {
     
     /// Attempts to add a species to the garden if resources allow
     /// Returns true if successful, false if insufficient resources
-    pub fn add_species(&mut self, species_type: SpeciesType) -> bool {
-        let requirements = species_type.daily_consumption();
+    pub fn add_species(&mut self, card: Card) -> bool {
+        let requirements = card.definition().daily_consumption.clone();
         
         if !self.can_afford(&requirements) {
             return false;
@@ -89,12 +89,12 @@ impl GardenState {
         
         // Add the new species instance
         self.species.push(SpeciesInstance {
-            species_type,
+            card: card.clone(),
             population: 1,
         });
         
         // Apply the species' resource production
-        let production = species_type.daily_production();
+        let production = card.definition().daily_production.clone();
         for (resource_type, amount) in production {
             self.modify_resource(resource_type, amount);
         }

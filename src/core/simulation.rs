@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::core::{GameState, AddSpeciesEvent};
-use crate::types::CardType;
+use crate::types::Card;
 
 /// Event for when a card is played
 #[derive(Event)]
@@ -26,22 +26,17 @@ fn try_play_card(
     game_state: &mut GameState,
     add_species_events: &mut EventWriter<AddSpeciesEvent>,
     hand_index: usize,
-) -> Option<CardType> {
+) -> Option<Card> {
     // Validate hand index
     if hand_index >= game_state.hand.len() {
         return None;
     }
 
-    let card = game_state.hand[hand_index];
+    let card = game_state.hand[hand_index].clone();
     
-    // Try to play the card based on its type
-    match card {
-        CardType::Species(species_type) => {
-            // Send event to add species - the simulation system will handle resource validation
-            add_species_events.write(AddSpeciesEvent { species_type });
-            
-            // Remove card from hand regardless - the add species system will handle validation
-            game_state.play_card(hand_index)
-        }
-    }
+    // Send event to add species - the simulation system will handle resource validation
+    add_species_events.write(AddSpeciesEvent { card: card.clone() });
+    
+    // Remove card from hand regardless - the add species system will handle validation
+    game_state.play_card(hand_index)
 }

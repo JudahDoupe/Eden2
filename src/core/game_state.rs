@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::types::{CardType, SpeciesType};
+use crate::types::Card;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -8,18 +8,15 @@ const INITIAL_HAND_SIZE: usize = 5;
 /// Core game state for managing cards, deck, and player hand
 #[derive(Resource, Clone)]
 pub struct GameState {
-    pub deck: Vec<CardType>,
-    pub hand: Vec<CardType>,
+    pub deck: Vec<Card>,
+    pub hand: Vec<Card>,
     pub selected_card_index: Option<usize>,
 }
 
 impl Default for GameState {
     fn default() -> Self {
-        // Create a deck with all species cards
-        let mut deck: Vec<CardType> = SpeciesType::all()
-            .iter()
-            .map(|&species| CardType::Species(species))
-            .collect();
+        // Create a deck with all cards
+        let mut deck = Card::all();
         
         // Randomize the deck
         let mut rng = thread_rng();
@@ -34,7 +31,7 @@ impl Default for GameState {
 }
 
 impl GameState {
-    pub fn draw_card(&mut self) -> Option<CardType> {
+    pub fn draw_card(&mut self) -> Option<Card> {
         if !self.deck.is_empty() {
             Some(self.deck.remove(0))
         } else {
@@ -52,7 +49,7 @@ impl GameState {
     }
     
     /// Plays a card from the hand at the given index, replacing it with a new card from deck
-    pub fn play_card(&mut self, hand_index: usize) -> Option<CardType> {
+    pub fn play_card(&mut self, hand_index: usize) -> Option<Card> {
         if hand_index >= self.hand.len() {
             return None;
         }
