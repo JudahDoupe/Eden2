@@ -3,6 +3,10 @@ name = "eden2"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "eden2-game"
+path = "src/main.rs"
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 

@@ -1,13 +1,11 @@
-pub mod core;
-pub mod ui;
-pub mod types;
-
-pub use types::*;
+pub mod gameplay;
+pub mod visualization;
 
 use bevy::prelude::*;
-use core::simulation::*;
-use ui::systems::layout::setup_ui;
-use ui::systems::*;
+use gameplay::garden::*;
+use gameplay::*;
+use visualization::init_ui_elements;
+use visualization::*;
 
 /// Creates the main Bevy app with shared configuration for native and web builds
 pub fn create_app(window_config: Window) -> App {
@@ -20,18 +18,19 @@ pub fn create_app(window_config: Window) -> App {
     }));
     
     // Register events
-    app.add_event::<CardPlayEvent>();
-    app.add_event::<core::simulation_systems::AddSpeciesEvent>();
-    app.add_event::<core::simulation_systems::TriggerSimulationEvent>();
+    app.add_event::<PlayCardEvent>();
+    app.add_event::<AddSpeciesEvent>();
+    app.add_event::<SimulateDayEvent>();
     
     // Add resources
-    app.init_resource::<core::GameState>();
+    app.init_resource::<gameplay::GameState>();
+    app.init_resource::<gameplay::garden::GardenState>();
+    app.init_resource::<visualization::display::ScreenLayout>();
     
     // Add startup systems
     app.add_systems(Startup, (
-        setup_ui,
-        initialize_screen_layout,
-        core::simulation_systems::spawn_garden,
+        init_ui_elements,
+        init_screen_layout,
     ).chain());
     
     // Add update systems
@@ -45,11 +44,11 @@ pub fn create_app(window_config: Window) -> App {
         update_hand_layout,
         update_card_visuals,
         // Core Game Systems
-        handle_card_play,
+        handle_species_play,
         // Simulation Systems (order matters!)
-        core::simulation_systems::handle_add_species,
-        core::simulation_systems::trigger_simulation_on_card_play.after(core::simulation_systems::handle_add_species),
-        core::simulation_systems::run_daily_simulation.after(core::simulation_systems::trigger_simulation_on_card_play),
+        handle_add_species,
+        trigger_simulation_on_species_play.after(handle_add_species),
+        run_daily_simulation.after(trigger_simulation_on_species_play),
     ));
     
     app

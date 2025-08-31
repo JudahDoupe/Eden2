@@ -1,111 +1,9 @@
 use bevy::prelude::*;
-
-/// Responsive sizing utility for UI elements
-#[derive(Resource, Clone)]
-pub struct ResponsiveSize {
-    pub window_size: Vec2,
-}
-
-impl ResponsiveSize {
-    pub fn new(window_size: Vec2) -> Self {
-        Self { window_size }
-    }
-    
-    // Width-based sizing (percentage of screen width)
-    pub fn width_pct(&self, percentage: f32) -> f32 {
-        self.window_size.x * (percentage / 100.0)
-    }
-    
-    // Height-based sizing (percentage of screen height)
-    pub fn height_pct(&self, percentage: f32) -> f32 {
-        self.window_size.y * (percentage / 100.0)
-    }
-    
-    // Minimum dimension based sizing (useful for square elements)
-    pub fn min_pct(&self, percentage: f32) -> f32 {
-        self.window_size.x.min(self.window_size.y) * (percentage / 100.0)
-    }
-    
-    // Maximum dimension based sizing
-    pub fn max_pct(&self, percentage: f32) -> f32 {
-        self.window_size.x.max(self.window_size.y) * (percentage / 100.0)
-    }
-    
-    // Responsive font size based on screen dimensions
-    pub fn font_size(&self, size_class: FontSizeClass) -> f32 {
-        let base_size = match size_class {
-            FontSizeClass::Small => self.min_pct(2.0),    // 2% of smallest dimension
-            FontSizeClass::Medium => self.min_pct(2.5),   // 2.5% of smallest dimension
-            FontSizeClass::Large => self.min_pct(3.0),    // 3% of smallest dimension
-            FontSizeClass::XLarge => self.min_pct(4.0),   // 4% of smallest dimension
-        };
-        base_size.clamp(10.0, 24.0) // Ensure readable range
-    }
-    
-    // Responsive padding/margin
-    pub fn padding(&self, padding_class: PaddingClass) -> f32 {
-        match padding_class {
-            PaddingClass::XSmall => self.min_pct(0.5),   // 0.5%
-            PaddingClass::Small => self.min_pct(1.0),    // 1%
-            PaddingClass::Medium => self.min_pct(2.0),   // 2%
-            PaddingClass::Large => self.min_pct(3.0),    // 3%
-            PaddingClass::XLarge => self.min_pct(4.0),   // 4%
-        }
-    }
-    
-    // Responsive spacing between elements
-    pub fn spacing(&self, spacing_class: SpacingClass) -> f32 {
-        match spacing_class {
-            SpacingClass::Tight => self.width_pct(1.0),     // 1% of width
-            SpacingClass::Normal => self.width_pct(2.0),    // 2% of width
-            SpacingClass::Relaxed => self.width_pct(3.0),   // 3% of width
-            SpacingClass::Loose => self.width_pct(5.0),     // 5% of width
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-pub enum FontSizeClass {
-    Small,
-    Medium,
-    Large,
-    XLarge,
-}
-
-#[derive(Clone, Copy)]
-pub enum PaddingClass {
-    XSmall,
-    Small,
-    Medium,
-    Large,
-    XLarge,
-}
-
-#[derive(Clone, Copy)]
-pub enum SpacingClass {
-    Tight,
-    Normal,
-    Relaxed,
-    Loose,
-}
-
-/// Convenience trait for easy responsive sizing access
-pub trait ResponsiveExt {
-    fn responsive(&self) -> &ResponsiveSize;
-    
-    // Shorthand methods for common operations
-    fn w(&self, pct: f32) -> f32 { self.responsive().width_pct(pct) }
-    fn h(&self, pct: f32) -> f32 { self.responsive().height_pct(pct) }
-    fn font(&self, class: FontSizeClass) -> f32 { self.responsive().font_size(class) }
-    fn pad(&self, class: PaddingClass) -> f32 { self.responsive().padding(class) }
-    fn space(&self, class: SpacingClass) -> f32 { self.responsive().spacing(class) }
-}
-
-impl ResponsiveExt for ScreenLayout {
-    fn responsive(&self) -> &ResponsiveSize {
-        &self.responsive
-    }
-}
+use bevy::window::{WindowResized, PrimaryWindow};
+use crate::gameplay::GameState;
+use crate::visualization::garden::{GardenBackground, LayoutInitialized, init_garden_ui, ResourceDisplayText, SpeciesDisplayText};
+use crate::visualization::cards::init_hand_cards;
+use super::responsive_size_utils::{ResponsiveSize, FontSizeClass, PaddingClass, SpacingClass, ResponsiveExt};
 
 /// Screen layout manager for responsive UI positioning
 #[derive(Resource, Clone)]
@@ -128,6 +26,12 @@ impl Default for ScreenLayout {
             card_area_y: -window_size.y * 0.4167, // Middle of bottom third (-41.67%)
             responsive,
         }
+    }
+}
+
+impl ResponsiveExt for ScreenLayout {
+    fn responsive(&self) -> &ResponsiveSize {
+        &self.responsive
     }
 }
 
@@ -219,3 +123,96 @@ impl ScreenLayout {
         self.responsive.spacing(class)
     }
 }
+
+// ==============================================
+// LAYOUT SYSTEMS (from layout.rs)
+// ==============================================
+
+/// System to initialize screen layout on startup
+pub fn init_screen_layout(
+    mut screen_layout: ResMut<ScreenLayout>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+) {
+    if let Some(window) = window_query.iter().next() {
+        let window_size = Vec2::new(window.width(), window.height());
+        screen_layout.update_for_window_size(window_size);
+    }
+}
+
+/// Window resize handling system
+pub fn handle_window_resize(
+    mut resize_events: EventReader<WindowResized>,
+    mut screen_layout: ResMut<ScreenLayout>,
+    mut layout_initialized: ResMut<LayoutInitialized>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    mut garden_query: Query<&mut Transform, With<GardenBackground>>,
+    mut garden_sprite_query: Query<&mut Sprite, With<GardenBackground>>,
+    mut resource_query: Query<&mut Transform, (With<ResourceDisplayText>, Without<GardenBackground>, Without<SpeciesDisplayText>)>,
+    mut species_query: Query<&mut Transform, (With<SpeciesDisplayText>, Without<GardenBackground>, Without<ResourceDisplayText>)>,
+) {
+    let mut layout_updated = false;
+    
+    // Handle window resize events
+    for event in resize_events.read() {
+        let new_size = Vec2::new(event.width, event.height);
+        screen_layout.update_for_window_size(new_size);
+        layout_updated = true;
+    }
+    
+    // If not initialized yet, try to initialize from current window
+    if !layout_initialized.0 {
+        if let Some(window) = window_query.iter().next() {
+            let window_size = Vec2::new(window.width(), window.height());
+            if window_size.x > 0.0 && window_size.y > 0.0 && window_size != Vec2::new(800.0, 600.0) {
+                screen_layout.update_for_window_size(window_size);
+                layout_initialized.0 = true;
+                layout_updated = true;
+            }
+        }
+    }
+    
+    // Update UI elements if layout was updated
+    if layout_updated {
+        // Update garden background size and position
+        for mut transform in garden_query.iter_mut() {
+            transform.translation = Vec3::new(screen_layout.garden_center.x, screen_layout.garden_center.y, 0.0);
+        }
+        
+        for mut sprite in garden_sprite_query.iter_mut() {
+            sprite.custom_size = Some(screen_layout.garden_area);
+        }
+        
+        // Update relative positions of child text elements when garden size changes
+        for mut transform in resource_query.iter_mut() {
+            transform.translation = Vec3::new(
+                -screen_layout.garden_area.x / 4.0,
+                0.0,
+                1.0
+            );
+        }
+        
+        for mut transform in species_query.iter_mut() {
+            transform.translation = Vec3::new(
+                screen_layout.garden_area.x / 4.0,
+                0.0,
+                1.0
+            );
+        }
+    }
+}
+
+/// Initial setup system for UI elements
+pub fn init_ui_elements(
+    mut commands: Commands,
+    game_state: Res<GameState>,
+    screen_layout: Res<ScreenLayout>,
+) {
+    commands.spawn(Camera2d);
+    // Initialize layout tracking resource
+    commands.insert_resource(LayoutInitialized::default());
+    
+    init_garden_ui(&mut commands, &screen_layout);
+    init_hand_cards(&mut commands, &game_state, &screen_layout);
+}
+
+

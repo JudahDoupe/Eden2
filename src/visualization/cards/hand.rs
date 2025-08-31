@@ -1,9 +1,12 @@
 use bevy::prelude::*;
-use crate::core::GameState;
-use crate::ui::{CardComponent, CardSprite, CardText, ScreenLayout, FontSizeClass};
+use crate::gameplay::GameState;
+use crate::gameplay::species::species::get_species;
+use crate::visualization::ScreenLayout;
+use crate::visualization::display::FontSizeClass;
+use super::{CardComponent, CardSprite, CardText};
 
 /// Spawn hand UI with cards
-pub fn spawn_hand_cards(commands: &mut Commands, game_state: &GameState, screen_layout: &ScreenLayout) {
+pub fn init_hand_cards(commands: &mut Commands, game_state: &GameState, screen_layout: &ScreenLayout) {
     let card_size = screen_layout.calculate_card_size(game_state.hand.len());
     let card_spacing = screen_layout.calculate_card_spacing(game_state.hand.len());
     let total_width = if game_state.hand.len() > 1 {
@@ -19,13 +22,13 @@ pub fn spawn_hand_cards(commands: &mut Commands, game_state: &GameState, screen_
         // Spawn card background (green rectangle)
         let card_entity = commands.spawn((
             Sprite {
-                color: card.definition().color,
+                color: get_species(card.name()).expect("Species definition not found").color,
                 custom_size: Some(card_size),
                 ..default()
             },
             Transform::from_translation(Vec3::new(x_position, screen_layout.card_area_y, 1.0)),
             CardComponent {
-                card: card.clone(),
+                species: card.clone(),
                 hand_index: index,
                 is_selected: false,
             },
@@ -52,19 +55,6 @@ pub fn spawn_hand_cards(commands: &mut Commands, game_state: &GameState, screen_
     }
 }
 
-/// Update card visuals based on state
-pub fn update_card_visuals(
-    mut card_query: Query<(&CardComponent, &mut Sprite), With<CardSprite>>,
-) {
-    for (card, mut sprite) in card_query.iter_mut() {
-        sprite.color = if card.is_selected {
-            Color::srgb(1.0, 1.0, 0.8) // Light yellow when selected
-        } else {
-            card.card.definition().color
-        };
-    }
-}
-
 /// Update hand UI when cards change
 pub fn update_hand_ui(
     mut commands: Commands,
@@ -76,11 +66,11 @@ pub fn update_hand_ui(
     if game_state.is_changed() {
         // Remove old cards (children text will be automatically removed)
         for entity in card_query.iter() {
-            commands.entity(entity).despawn(); // Automatically recursive in Bevy 0.16
+            commands.entity(entity).despawn();
         }
         
         // Spawn new hand
-        spawn_hand_cards(&mut commands, &game_state, &screen_layout);
+        init_hand_cards(&mut commands, &game_state, &screen_layout);
     }
 }
 
