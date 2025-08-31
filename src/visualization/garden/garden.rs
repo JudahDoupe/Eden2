@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::gameplay::garden::{GardenState, resources::ResourceType};
+use crate::gameplay::garden::{Garden, resources::ResourceType};
 use crate::visualization::display::{ScreenLayout};
 use super::super::display::responsive_size_utils::FontSizeClass;
 
@@ -58,7 +58,7 @@ pub fn init_garden_ui(commands: &mut Commands, screen_layout: &ScreenLayout) -> 
 }
 
 pub fn update_resource_display(
-    garden_state: Res<GardenState>,
+    garden_state: Res<Garden>,
     mut text_query: Query<&mut Text2d, With<ResourceDisplayText>>,
 ) {
     if garden_state.is_changed() {
@@ -75,13 +75,13 @@ pub fn update_resource_display(
 }
 
 pub fn update_species_display(
-    garden_state: Res<GardenState>,
+    garden_state: Res<Garden>,
     mut text_query: Query<&mut Text2d, With<SpeciesDisplayText>>,
 ) {
     if garden_state.is_changed() {
         let mut species_text = String::from("Species:");
         
-        if garden_state.species.is_empty() {
+        if garden_state.is_empty() {
             species_text.push_str("\nNo species yet");
         } else {
             for species in &garden_state.species {

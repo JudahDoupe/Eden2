@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::gameplay::garden::PlayCardEvent;
+use crate::gameplay::cards::PlayCardEvent;
 use crate::gameplay::Card;
 use crate::gameplay::species::species::get_species;
 use crate::visualization::ScreenLayout;

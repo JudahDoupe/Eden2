@@ -54,14 +54,6 @@ impl Deck {
         }
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.cards.is_empty()
-    }
-
-    pub fn len(&self) -> usize {
-        self.cards.len()
-    }
-
     pub fn shuffle(&mut self) {
         let mut rng = thread_rng();
         self.cards.shuffle(&mut rng);
@@ -73,5 +65,13 @@ impl Deck {
 
     pub fn add_to_top(&mut self, card: Card) {
         self.cards.insert(0, card);
+    }
+    
+    pub fn is_empty(&self) -> bool {
+        self.cards.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.cards.len()
     }
 }

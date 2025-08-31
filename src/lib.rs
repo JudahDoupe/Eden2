@@ -3,6 +3,7 @@ pub mod visualization;
 
 use bevy::prelude::*;
 use gameplay::garden::*;
+use gameplay::cards::{PlayCardEvent, handle_play_card_event};
 use gameplay::*;
 use visualization::init_ui_elements;
 use visualization::*;
@@ -19,12 +20,12 @@ pub fn create_app(window_config: Window) -> App {
     
     // Register events
     app.add_event::<PlayCardEvent>();
-    app.add_event::<AddSpeciesEvent>();
+    app.add_event::<AddSpeciesToGardenEvent>();
     app.add_event::<SimulateDayEvent>();
     
     // Add resources
     app.init_resource::<gameplay::GameState>();
-    app.init_resource::<gameplay::garden::GardenState>();
+    app.init_resource::<gameplay::garden::Garden>();
     app.init_resource::<visualization::display::ScreenLayout>();
     
     // Add startup systems
@@ -44,10 +45,10 @@ pub fn create_app(window_config: Window) -> App {
         update_hand_layout,
         update_card_visuals,
         // Core Game Systems
-        handle_species_play,
+        handle_play_card_event,
         // Simulation Systems (order matters!)
-        handle_add_species,
-        trigger_simulation_on_species_play.after(handle_add_species),
+        handle_add_species_to_garden_event,
+        trigger_simulation_on_species_play.after(handle_add_species_to_garden_event),
         run_daily_simulation.after(trigger_simulation_on_species_play),
     ));
     

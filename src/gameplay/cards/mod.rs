@@ -5,4 +5,4 @@ pub mod hand;
 // Re-export the main types
 pub use card::Card;
 pub use deck::Deck;
-pub use hand::Hand;
+pub use hand::{Hand, PlayCardEvent, handle_play_card_event};
