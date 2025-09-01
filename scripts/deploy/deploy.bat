@@ -49,7 +49,7 @@ echo ✅ Eden2 deployed successfully!
 echo ================================
 echo.
 echo 🎮 Game is ready: http://localhost
-echo 📱 Network access: http://YOUR_LOCAL_IP
+echo 📱 Network access: http://eedenthegame.com
 echo.
 echo Quick commands:
 echo   Stop:    stop.bat
@@ -57,5 +57,4 @@ echo   Restart: scripts\deploy\restart.bat
 echo   Logs:    scripts\deploy\logs.bat
 echo   Redeploy: deploy.bat
 echo.
-echo 📖 Documentation: docs\README.md
 echo ================================
