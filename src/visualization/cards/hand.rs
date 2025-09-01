@@ -3,6 +3,7 @@ use crate::gameplay::GameState;
 use crate::gameplay::species::species::get_species;
 use crate::visualization::ScreenLayout;
 use crate::visualization::display::FontSizeClass;
+use crate::visualization::ui::SelectedCard;
 use super::{CardComponent, CardSprite, CardText};
 
 /// Spawn hand UI with cards
@@ -80,6 +81,7 @@ pub fn update_hand_layout(
     mut text_query: Query<(&mut Transform, &mut TextFont), (With<CardText>, Without<CardSprite>)>,
     screen_layout: Res<ScreenLayout>,
     game_state: Res<GameState>,
+    selected_card: Res<SelectedCard>,
 ) {
     if screen_layout.is_changed() || game_state.is_changed() {
         let card_size = screen_layout.calculate_card_size(game_state.hand.len());
@@ -94,8 +96,11 @@ pub fn update_hand_layout(
         // Update card sprite positions and sizes (text will follow automatically as children)
         for (mut transform, mut sprite, card) in card_query.iter_mut() {
             let x_position = start_x + (card.hand_index as f32 * (card_size.x + card_spacing));
-            transform.translation = Vec3::new(x_position, screen_layout.card_area_y, 1.0);
-            sprite.custom_size = Some(card_size);
+            let is_selected = selected_card.get_selected() == Some(card.hand_index);
+            
+            // Set position and size based on selection state
+            transform.translation = Vec3::new(x_position, screen_layout.card_area_y, if is_selected { 2.0 } else { 1.0 });
+            sprite.custom_size = Some(if is_selected { card_size * 1.3 } else { card_size });
         }
         
         // Update text font sizes (positions are handled by parent-child relationship)

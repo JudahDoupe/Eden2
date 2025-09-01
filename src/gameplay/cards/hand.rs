@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use super::{card::Card};
-use crate::gameplay::garden::AddSpeciesToGardenEvent;
+use crate::gameplay::garden::{AddSpeciesToGardenEvent, SimulateDayEvent};
 use crate::gameplay::species::get_species;
 
 /// Hand resource for managing the player's current cards
@@ -58,6 +58,11 @@ pub struct PlayCardEvent {
     pub hand_index: usize,
 }
 
+#[derive(Event)]
+pub struct DiscardCardEvent {
+    pub hand_index: usize,
+}
+
 // ===== SYSTEMS =====
 
 pub fn handle_play_card_event(
@@ -90,5 +95,24 @@ pub fn handle_play_card_event(
         }
 
         add_species_events.write(AddSpeciesToGardenEvent { species: species_def.clone() });
+    }
+}
+
+pub fn handle_discard_card_event(
+    mut game_state: ResMut<crate::gameplay::GameState>,
+    mut discard_events: EventReader<DiscardCardEvent>,
+    mut simulate_day_events: EventWriter<SimulateDayEvent>,
+) {
+    for event in discard_events.read() {
+        // Remove the card from hand
+        if game_state.hand.remove_card(event.hand_index).is_some() {
+            // Draw a new card to replace it
+            if let Some(new_card) = game_state.deck.draw() {
+                game_state.hand.add_card(new_card);
+            }
+            
+            // Simulate a day passing
+            simulate_day_events.write(SimulateDayEvent);
+        }
     }
 }

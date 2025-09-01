@@ -3,6 +3,7 @@ use bevy::window::{WindowResized, PrimaryWindow};
 use crate::gameplay::GameState;
 use crate::visualization::garden::{GardenBackground, LayoutInitialized, init_garden_ui, ResourceDisplayText, SpeciesDisplayText};
 use crate::visualization::cards::init_hand_cards;
+use crate::visualization::ui::init_action_buttons;
 use super::responsive_size_utils::{ResponsiveSize, FontSizeClass, PaddingClass, SpacingClass, ResponsiveExt};
 
 /// Screen layout manager for responsive UI positioning
@@ -12,6 +13,7 @@ pub struct ScreenLayout {
     pub garden_area: Vec2,
     pub garden_center: Vec2,
     pub card_area_y: f32,
+    pub button_area_y: f32,
     pub responsive: ResponsiveSize,
 }
 
@@ -19,11 +21,23 @@ impl Default for ScreenLayout {
     fn default() -> Self {
         let window_size = Vec2::new(800.0, 600.0);
         let responsive = ResponsiveSize::new(window_size);
+        
+        // Allocate screen space: 10% buttons, 20% cards, 70% garden
+        let button_height_pct = 10.0;
+        let card_height_pct = 20.0;
+        let garden_height_pct = 70.0;
+        
+        let button_area_y = -window_size.y * 0.5 + (button_height_pct / 100.0) * window_size.y * 0.5;
+        let card_area_y = button_area_y + (button_height_pct / 100.0) * window_size.y + (card_height_pct / 100.0) * window_size.y * 0.5;
+        let garden_height = (garden_height_pct / 100.0) * window_size.y;
+        let garden_center_y = card_area_y + (card_height_pct / 100.0) * window_size.y * 0.5 + garden_height * 0.5;
+        
         Self {
             window_size,
-            garden_area: Vec2::new(window_size.x, window_size.y * 2.0 / 3.0),
-            garden_center: Vec2::new(0.0, window_size.y / 6.0),
-            card_area_y: -window_size.y * 0.4167, // Middle of bottom third (-41.67%)
+            garden_area: Vec2::new(window_size.x, garden_height),
+            garden_center: Vec2::new(0.0, garden_center_y),
+            card_area_y,
+            button_area_y,
             responsive,
         }
     }
@@ -39,13 +53,26 @@ impl ScreenLayout {
     pub fn update_for_window_size(&mut self, window_size: Vec2) {
         self.window_size = window_size;
         self.responsive = ResponsiveSize::new(window_size);
-        self.garden_area = Vec2::new(window_size.x, self.responsive.height_pct(66.67)); // Top 2/3rds
-        self.garden_center = Vec2::new(0.0, self.responsive.height_pct(16.67)); // Center of top 2/3rds
         
-        // Position cards in the middle of the bottom third
-        // Bottom third goes from -33.33% to -50% of screen height
-        // So middle of bottom third is at -41.67% of screen height
-        self.card_area_y = -self.responsive.height_pct(41.67);
+        // Allocate screen space: 10% buttons, 20% cards, 70% garden
+        let button_height_pct = 10.0;
+        let card_height_pct = 20.0;
+        let garden_height_pct = 70.0;
+        
+        // Calculate positions from bottom to top
+        // Buttons are at the bottom (just above the very bottom edge)
+        self.button_area_y = -window_size.y * 0.5 + self.responsive.height_pct(button_height_pct * 0.5);
+        
+        // Cards are above buttons
+        self.card_area_y = self.button_area_y + self.responsive.height_pct(button_height_pct * 0.5) + self.responsive.height_pct(card_height_pct * 0.5);
+        
+        // Garden takes up the remaining space at the top
+        let garden_height = self.responsive.height_pct(garden_height_pct);
+        self.garden_area = Vec2::new(window_size.x, garden_height);
+        
+        // Garden center is in the middle of the garden area
+        let garden_bottom = self.card_area_y + self.responsive.height_pct(card_height_pct * 0.5);
+        self.garden_center = Vec2::new(0.0, garden_bottom + garden_height * 0.5);
     }
     
     pub fn calculate_card_size(&self, hand_size: usize) -> Vec2 {
@@ -213,6 +240,7 @@ pub fn init_ui_elements(
     
     init_garden_ui(&mut commands, &screen_layout);
     init_hand_cards(&mut commands, &game_state, &screen_layout);
+    init_action_buttons(&mut commands, &screen_layout);
 }
 
 

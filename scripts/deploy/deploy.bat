@@ -48,8 +48,8 @@ echo ================================
 echo ✅ Eden2 deployed successfully!
 echo ================================
 echo.
-echo 🎮 Game is ready: http://localhost:8080
-echo 📱 Network access: http://YOUR_LOCAL_IP:8080
+echo 🎮 Game is ready: http://localhost
+echo 📱 Network access: http://YOUR_LOCAL_IP
 echo.
 echo Quick commands:
 echo   Stop:    stop.bat

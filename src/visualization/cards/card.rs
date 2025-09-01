@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use crate::gameplay::cards::PlayCardEvent;
 use crate::gameplay::Card;
 use crate::gameplay::species::species::get_species;
 use crate::visualization::ScreenLayout;
+use crate::visualization::ui::SelectedCard;
 
 #[derive(Clone, Debug)]
 pub struct CardDefinition {
@@ -44,18 +44,36 @@ pub struct CardText;
 
 /// Update card visuals based on state
 pub fn update_card_visuals(
-    mut card_query: Query<(&CardComponent, &mut Sprite), With<CardSprite>>,
+    mut card_query: Query<(&mut CardComponent, &mut Sprite, &mut Transform), With<CardSprite>>,
+    selected_card: Res<SelectedCard>,
+    screen_layout: Res<ScreenLayout>,
+    game_state: Res<crate::gameplay::GameState>,
 ) {
-    for (card, mut sprite) in card_query.iter_mut() {
-        sprite.color = if card.is_selected {
-            Color::srgb(1.0, 1.0, 0.8) // Light yellow when selected
-        } else {
-            card.card_definition().color
-        };
+    if selected_card.is_changed() {
+        let card_size = screen_layout.calculate_card_size(game_state.hand.len());
+        
+        for (mut card, mut sprite, mut transform) in card_query.iter_mut() {
+            let is_selected = selected_card.get_selected() == Some(card.hand_index);
+            card.is_selected = is_selected;
+            
+            // Keep original color
+            sprite.color = card.card_definition().color;
+            
+            // Change size based on selection
+            if is_selected {
+                let selected_size = card_size * 1.3; // 30% larger
+                sprite.custom_size = Some(selected_size);
+                // Move selected card slightly up so it doesn't overlap with buttons
+                transform.translation.z = 2.0; // Higher z-index
+            } else {
+                sprite.custom_size = Some(card_size);
+                transform.translation.z = 1.0; // Normal z-index
+            }
+        }
     }
 }
 
-/// Handles clicking/touching cards to play them
+/// Handles clicking/touching cards to select them
 pub fn handle_card_clicks(
     card_query: Query<(&CardComponent, &Transform), With<CardSprite>>,
     screen_layout: Res<ScreenLayout>,
@@ -63,7 +81,7 @@ pub fn handle_card_clicks(
     touches: Res<Touches>,
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
-    mut species_play_events: EventWriter<PlayCardEvent>,
+    mut selected_card: ResMut<SelectedCard>,
 ) {
     // Get required components
     let Ok(window) = windows.single() else { return };
@@ -74,7 +92,7 @@ pub fn handle_card_clicks(
     
     if let Some(screen_pos) = interaction_pos {
         if let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, screen_pos) {
-            handle_card_interaction(world_pos, &card_query, &screen_layout, &mut species_play_events);
+            handle_card_interaction(world_pos, &card_query, &screen_layout, &mut selected_card);
         }
     }
 }
@@ -99,13 +117,16 @@ fn handle_card_interaction(
     world_pos: Vec2,
     card_query: &Query<(&CardComponent, &Transform), With<CardSprite>>,
     screen_layout: &ScreenLayout,
-    species_play_events: &mut EventWriter<PlayCardEvent>,
+    selected_card: &mut SelectedCard,
 ) {
     for (card, transform) in card_query.iter() {
         if is_point_in_card(world_pos, transform.translation.truncate(), screen_layout, card.hand_index) {
-            species_play_events.write(PlayCardEvent {
-                hand_index: card.hand_index,
-            });
+            // Toggle selection - if the same card is clicked, deselect it
+            if selected_card.get_selected() == Some(card.hand_index) {
+                selected_card.clear();
+            } else {
+                selected_card.select(card.hand_index);
+            }
             break;
         }
     }
