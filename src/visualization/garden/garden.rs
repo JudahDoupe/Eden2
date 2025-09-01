@@ -64,7 +64,7 @@ pub fn update_resource_display(
     if garden_state.is_changed() {
         let mut resource_text = String::from("Resources:");
         for resource_type in ResourceType::all() {
-            let amount = garden_state.get_resource(resource_type);
+            let amount = garden_state.resources.get_resource(resource_type);
             resource_text.push_str(&format!("\n{}: {}", resource_type.name(), amount));
         }
         
@@ -84,10 +84,10 @@ pub fn update_species_display(
         if garden_state.is_empty() {
             species_text.push_str("\nNo species yet");
         } else {
-            for species in &garden_state.species {
+            for species in garden_state.current_species() {
                 species_text.push_str(&format!("\n{} ({})", 
-                    species.species.name, 
-                    species.population
+                    species.name,
+                    garden_state.species_population(&species.name)
                 ));
             }
         }

@@ -8,39 +8,39 @@ pub fn get_plant_tier_1() -> HashMap<&'static str, Species> {
 
     species.insert("Grass", 
         Species::new("Grass", Kingdom::Plant, 1, 5, Color::srgb(0.4, 0.7, 0.3))
-            .survival_requirement(ResourceType::Sunlight, 2, 8)
-            .survival_requirement(ResourceType::GroundWater, 1, 6)
-            .survival_requirement(ResourceType::SoilNutrients, 1, 5)
-            .survival_requirement(ResourceType::CO2, 1, 10)
-            .consumes(ResourceType::CO2, 1)
-            .consumes(ResourceType::Sunlight, 1)
-            .consumes(ResourceType::GroundWater, 1)
-            .produces(ResourceType::O2, 2)
-            .produces(ResourceType::GreenVegetation, 1)
+            .with_survival_requirement(ResourceType::Sunlight, 2, 8)
+            .with_survival_requirement(ResourceType::GroundWater, 1, 6)
+            .with_survival_requirement(ResourceType::SoilNutrients, 1, 5)
+            .with_survival_requirement(ResourceType::CO2, 1, 10)
+            .with_daily_consumption(ResourceType::CO2, 1)
+            .with_daily_consumption(ResourceType::Sunlight, 1)
+            .with_daily_consumption(ResourceType::GroundWater, 1)
+            .wioth_daily_production(ResourceType::O2, 2)
+            .wioth_daily_production(ResourceType::GreenVegetation, 1)
     );
 
     species.insert("Wildflowers", 
         Species::new("Wildflowers", Kingdom::Plant, 1, 4, Color::srgb(0.9, 0.7, 0.2))
-            .survival_requirement(ResourceType::Sunlight, 4, 8)
-            .survival_requirement(ResourceType::GroundWater, 1, 5)
-            .survival_requirement(ResourceType::SoilNutrients, 1, 4)
-            .survival_requirement(ResourceType::CO2, 1, 8)
-            .consumes(ResourceType::CO2, 1)
-            .consumes(ResourceType::Sunlight, 1)
-            .consumes(ResourceType::GroundWater, 1)
-            .produces(ResourceType::O2, 1)
-            .produces(ResourceType::GreenVegetation, 1)
+            .with_survival_requirement(ResourceType::Sunlight, 4, 8)
+            .with_survival_requirement(ResourceType::GroundWater, 1, 5)
+            .with_survival_requirement(ResourceType::SoilNutrients, 1, 4)
+            .with_survival_requirement(ResourceType::CO2, 1, 8)
+            .with_daily_consumption(ResourceType::CO2, 1)
+            .with_daily_consumption(ResourceType::Sunlight, 1)
+            .with_daily_consumption(ResourceType::GroundWater, 1)
+            .wioth_daily_production(ResourceType::O2, 1)
+            .wioth_daily_production(ResourceType::GreenVegetation, 1)
     );
 
     species.insert("Moss", 
         Species::new("Moss", Kingdom::Plant, 1, 8, Color::srgb(0.3, 0.4, 0.2))
-            .survival_requirement(ResourceType::Sunlight, 1, 3)
-            .survival_requirement(ResourceType::GroundWater, 4, 10)
-            .survival_requirement(ResourceType::SoilNutrients, 1, 3)
-            .survival_requirement(ResourceType::CO2, 1, 6)
-            .consumes(ResourceType::CO2, 1)
-            .consumes(ResourceType::Sunlight, 1)
-            .produces(ResourceType::O2, 1)
+            .with_survival_requirement(ResourceType::Sunlight, 1, 3)
+            .with_survival_requirement(ResourceType::GroundWater, 4, 10)
+            .with_survival_requirement(ResourceType::SoilNutrients, 1, 3)
+            .with_survival_requirement(ResourceType::CO2, 1, 6)
+            .with_daily_consumption(ResourceType::CO2, 1)
+            .with_daily_consumption(ResourceType::Sunlight, 1)
+            .wioth_daily_production(ResourceType::O2, 1)
     );
 
     species
@@ -51,15 +51,15 @@ pub fn get_plant_tier_2() -> HashMap<&'static str, Species> {
 
     species.insert("Berry Bushes", 
         Species::new("Berry Bushes", Kingdom::Plant, 2, 3, Color::srgb(0.6, 0.3, 0.7))
-            .survival_requirement(ResourceType::Sunlight, 3, 7)
-            .survival_requirement(ResourceType::GroundWater, 2, 6)
-            .survival_requirement(ResourceType::SoilNutrients, 2, 6)
-            .survival_requirement(ResourceType::O2, 2, 8)
-            .consumes(ResourceType::CO2, 1)
-            .consumes(ResourceType::Sunlight, 2)
-            .consumes(ResourceType::SoilNutrients, 2)
-            .produces(ResourceType::O2, 1)
-            .produces(ResourceType::Fruit, 2)
+            .with_survival_requirement(ResourceType::Sunlight, 3, 7)
+            .with_survival_requirement(ResourceType::GroundWater, 2, 6)
+            .with_survival_requirement(ResourceType::SoilNutrients, 2, 6)
+            .with_survival_requirement(ResourceType::O2, 2, 8)
+            .with_daily_consumption(ResourceType::CO2, 1)
+            .with_daily_consumption(ResourceType::Sunlight, 2)
+            .with_daily_consumption(ResourceType::SoilNutrients, 2)
+            .wioth_daily_production(ResourceType::O2, 1)
+            .wioth_daily_production(ResourceType::Fruit, 2)
     );
 
     species.insert("Clover", 

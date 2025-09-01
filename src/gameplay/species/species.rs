@@ -55,80 +55,57 @@ impl Species {
         }
     }
 
-    /// Add a survival requirement range (min, max)
-    pub fn survival_requirement(mut self, resource: ResourceType, min: i32, max: i32) -> Self {
+    pub fn with_survival_requirement(mut self, resource: ResourceType, min: i32, max: i32) -> Self {
         self.survival_requirements.insert(resource, (min, max));
         self
     }
 
-    /// Add daily consumption
-    pub fn consumes(mut self, resource: ResourceType, amount: i32) -> Self {
+    pub fn with_daily_consumption(mut self, resource: ResourceType, amount: i32) -> Self {
         self.daily_consumption.insert(resource, amount);
         self
     }
 
-    /// Add daily production
-    pub fn produces(mut self, resource: ResourceType, amount: i32) -> Self {
+    pub fn wioth_daily_production(mut self, resource: ResourceType, amount: i32) -> Self {
         self.daily_production.insert(resource, amount);
         self
     }
 }
 
-// ===== SPECIES DATA STRUCTURES =====
 
-/// Represents a species instance living in the garden
 #[derive(Clone, Debug)]
-pub struct SpeciesInstance {
+pub struct Creature {
     pub species: Species,
-    pub population: u32,
 }
 
-impl SpeciesInstance {
-    /// Create a new species instance with initial population
-    pub fn new(species: Species, initial_population: u32) -> Self {
+impl Creature {
+    pub fn new(species: Species) -> Self {
         Self {
             species,
-            population: initial_population,
         }
     }
 
-    /// Get the kingdom this species belongs to
-    pub fn kingdom(&self) -> Kingdom {
-        self.species.kingdom
-    }
-
-    /// Get the species name
-    pub fn name(&self) -> &str {
-        self.species.name
-    }
-
-    /// Get the daily resource consumption for this species (total for all population)
     pub fn total_daily_consumption(&self) -> HashMap<ResourceType, i32> {
         let mut total_consumption = HashMap::new();
         let species_def = &self.species;
         
         for (resource_type, amount) in &species_def.daily_consumption {
-            let total = amount * self.population as i32;
-            total_consumption.insert(*resource_type, total);
+            total_consumption.insert(*resource_type, *amount);
         }
         
         total_consumption
     }
 
-    /// Get the daily resource production for this species (total for all population)
     pub fn total_daily_production(&self) -> HashMap<ResourceType, i32> {
         let mut total_production = HashMap::new();
         let species_def = &self.species;
         
         for (resource_type, amount) in &species_def.daily_production {
-            let total = amount * self.population as i32;
-            total_production.insert(*resource_type, total);
+            total_production.insert(*resource_type, *amount);
         }
         
         total_production
     }
 
-    /// Check if this species can survive in the current resource environment
     pub fn can_survive(&self, resources: &GardenResources) -> bool {
         let species_def = &self.species;
         
@@ -142,31 +119,22 @@ impl SpeciesInstance {
         true
     }
 
-    /// Get the survival requirements for this species
     pub fn survival_requirements(&self) -> &HashMap<ResourceType, (i32, i32)> {
         &self.species.survival_requirements
     }
 }
 
-/// All species definitions organized by kingdom and tier - this aggregates all the individual functions!
-pub fn get_all_species() -> HashMap<&'static str, Species> {
-    let mut species = HashMap::new();
-
-    // Plants
-    species.extend(get_all_plant_species());
-
-    // Animals
-    species.extend(get_all_animal_species());
-
-    // Fungi
-    species.extend(get_all_fungi_species());
-
-    species
-}
-
-/// Get species definition by name
 pub fn get_species(name: &str) -> Option<&Species> {
     static SPECIES_DEFINITIONS: std::sync::OnceLock<HashMap<&'static str, Species>> = std::sync::OnceLock::new();
     let species = SPECIES_DEFINITIONS.get_or_init(get_all_species);
     species.get(name)
 }
+
+pub fn get_all_species() -> HashMap<&'static str, Species> {
+    let mut species = HashMap::new();
+    species.extend(get_all_plant_species());
+    species.extend(get_all_animal_species());
+    species.extend(get_all_fungi_species());
+    species
+}
+

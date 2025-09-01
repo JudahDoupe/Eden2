@@ -16,10 +16,6 @@ pub enum ResourceType {
     GreenVegetation,
     Fruit,
     DeadMatter,
-    // Population counters
-    PlantPopulation,
-    AnimalPopulation,
-    FungiPopulation,
 }
 
 impl ResourceType {
@@ -33,9 +29,6 @@ impl ResourceType {
             ResourceType::GreenVegetation => "Green Vegetation",
             ResourceType::Fruit => "Fruit",
             ResourceType::DeadMatter => "Dead Matter",
-            ResourceType::PlantPopulation => "Plant Population",
-            ResourceType::AnimalPopulation => "Animal Population",
-            ResourceType::FungiPopulation => "Fungi Population",
         }
     }
 
@@ -49,9 +42,6 @@ impl ResourceType {
             ResourceType::GreenVegetation,
             ResourceType::Fruit,
             ResourceType::DeadMatter,
-            ResourceType::PlantPopulation,
-            ResourceType::AnimalPopulation,
-            ResourceType::FungiPopulation,
         ]
     }
 
@@ -96,9 +86,6 @@ impl Default for GardenResources {
         resources.insert(ResourceType::GreenVegetation, 0);
         resources.insert(ResourceType::Fruit, 0);
         resources.insert(ResourceType::DeadMatter, 0);
-        resources.insert(ResourceType::PlantPopulation, 0);
-        resources.insert(ResourceType::AnimalPopulation, 0);
-        resources.insert(ResourceType::FungiPopulation, 0);
         
         Self { resources }
     }
@@ -129,14 +116,6 @@ impl GardenResources {
     pub fn apply_resource_changes(&mut self, changes: HashMap<ResourceType, i32>) {
         for (resource_type, change) in changes {
             self.modify_resource(resource_type, change);
-        }
-    }
-
-    /// Print current resource state for debugging
-    pub fn print_resources(&self) {
-        println!("=== Current Resource State ===");
-        for (resource_type, amount) in &self.resources {
-            println!("{}: {}", resource_type.name(), amount);
         }
     }
 }
