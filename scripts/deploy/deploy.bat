@@ -48,7 +48,7 @@ echo ================================
 echo ✅ Eden2 deployed successfully!
 echo ================================
 echo.
-echo 🎮 Game is ready: http://localhost
+echo 🎮 Game is ready: http://localhost:8080
 echo 📱 Network access: http://eedenthegame.com
 echo.
 echo Quick commands:
