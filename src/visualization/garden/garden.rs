@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::gameplay::garden::{Garden, resources::ResourceType};
+use crate::gameplay::lifecycle::{EcosystemPopulation, MatterType};
 use crate::visualization::display::{ScreenLayout};
 use super::super::display::responsive_size_utils::FontSizeClass;
 
@@ -58,15 +58,25 @@ pub fn init_garden_ui(commands: &mut Commands, screen_layout: &ScreenLayout) -> 
 }
 
 pub fn update_resource_display(
-    garden_state: Res<Garden>,
+    ecosystem_state: Res<EcosystemPopulation>,
     mut text_query: Query<&mut Text2d, With<ResourceDisplayText>>,
 ) {
-    if garden_state.is_changed() {
-        let mut resource_text = String::from("Resources:");
-        for resource_type in ResourceType::all() {
-            let amount = garden_state.resources.get_resource(resource_type);
-            resource_text.push_str(&format!("\n{}: {}", resource_type.name(), amount));
-        }
+    if ecosystem_state.is_changed() {
+        let mut resource_text = String::from("Ecosystem Matter:");
+        let matter = &ecosystem_state.ecosystem_matter;
+        
+        resource_text.push_str(&format!("\nSoil Nutrients: {}", matter.get_amount(MatterType::SoilNutrients)));
+        resource_text.push_str(&format!("\nDead Plant Matter: {}", matter.get_amount(MatterType::DeadPlantMatter)));
+        resource_text.push_str(&format!("\nDead Animal Matter: {}", matter.get_amount(MatterType::DeadAnimalMatter)));
+        
+        // Calculate total living matter
+        let biomass = ecosystem_state.total_living_biomass();
+        let plant_matter = biomass.get(&MatterType::PlantMatter).unwrap_or(&0);
+        let animal_matter = biomass.get(&MatterType::AnimalMatter).unwrap_or(&0);
+        
+        resource_text.push_str(&format!("\nLiving Plant Matter: {}", plant_matter));
+        resource_text.push_str(&format!("\nLiving Animal Matter: {}", animal_matter));
+        resource_text.push_str(&format!("\nDay: {}", ecosystem_state.current_day));
         
         if let Ok(mut text) = text_query.single_mut() {
             **text = resource_text;
@@ -75,21 +85,25 @@ pub fn update_resource_display(
 }
 
 pub fn update_species_display(
-    garden_state: Res<Garden>,
+    ecosystem_state: Res<EcosystemPopulation>,
     mut text_query: Query<&mut Text2d, With<SpeciesDisplayText>>,
 ) {
-    if garden_state.is_changed() {
+    if ecosystem_state.is_changed() {
         let mut species_text = String::from("Species:");
         
-        if garden_state.is_empty() {
+        if ecosystem_state.creatures.is_empty() {
             species_text.push_str("\nNo species yet");
         } else {
-            for species in garden_state.current_species() {
-                species_text.push_str(&format!("\n{} ({})", 
-                    species.name,
-                    garden_state.species_population(&species.name)
-                ));
+            // Group creatures by species and count them
+            for (species_name, count) in &ecosystem_state.living_population_by_species {
+                if *count > 0 {
+                    species_text.push_str(&format!("\n{}: {}", species_name, count));
+                }
             }
+            
+            // Show total creature count
+            let total_creatures = ecosystem_state.living_creatures().count();
+            species_text.push_str(&format!("\nTotal: {} creatures", total_creatures));
         }
         
         if let Ok(mut text) = text_query.single_mut() {

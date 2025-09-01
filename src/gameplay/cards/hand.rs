@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use super::{card::Card};
-use crate::gameplay::garden::{AddSpeciesToGardenEvent, SimulateDayEvent};
+use crate::gameplay::lifecycle::{AddSpeciesToEcosystemEvent, SimulateDayEvent};
 use crate::gameplay::species::get_species;
 
 /// Hand resource for managing the player's current cards
@@ -67,9 +67,8 @@ pub struct DiscardCardEvent {
 
 pub fn handle_play_card_event(
     mut game_state: ResMut<crate::gameplay::GameState>,
-    garden_state: Res<crate::gameplay::garden::Garden>,
     mut play_card_events: EventReader<PlayCardEvent>,
-    mut add_species_events: EventWriter<AddSpeciesToGardenEvent>,
+    mut add_species_events: EventWriter<AddSpeciesToEcosystemEvent>,
 ) {
     for event in play_card_events.read() {
         let Some(card) = game_state.hand.get_card(event.hand_index) else {
@@ -83,18 +82,31 @@ pub fn handle_play_card_event(
             continue;
         };
 
-        if !garden_state.resources.can_afford(&species_def.daily_consumption) {
-            println!("Insufficient resources to play card: {}", card_clone.name());
-            continue;
-        }
-
+        // Remove card from hand
         game_state.hand.remove_card(event.hand_index);
 
+        // Draw replacement card
         if let Some(new_card) = game_state.deck.draw() {
             game_state.hand.add_card(new_card);
         }
 
-        add_species_events.write(AddSpeciesToGardenEvent { species: species_def.clone() });
+        // Add species to ecosystem with appropriate starting biomass
+        let starting_biomass = match species_def.biomass_composition {
+            crate::gameplay::species::BiomassComposition::Plant => (3, 0), // Start with 3 plant matter
+            crate::gameplay::species::BiomassComposition::Animal => (0, 2), // Start with 2 animal matter
+            crate::gameplay::species::BiomassComposition::Mixed { plant_ratio, animal_ratio } => {
+                // For mixed compositions, split the total biomass proportionally
+                let total_biomass = 3.0;
+                let plant_amount = (total_biomass * plant_ratio) as u32;
+                let animal_amount = (total_biomass * animal_ratio) as u32;
+                (plant_amount, animal_amount)
+            }
+        };
+
+        add_species_events.write(AddSpeciesToEcosystemEvent { 
+            species: species_def.clone(),
+            starting_biomass,
+        });
     }
 }
 

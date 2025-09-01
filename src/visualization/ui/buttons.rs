@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use crate::gameplay::cards::{PlayCardEvent, DiscardCardEvent};
-use crate::gameplay::garden::SimulateDayEvent;
-use crate::gameplay::species::species::get_species;
+use crate::gameplay::lifecycle::SimulateDayEvent;
 use crate::visualization::ScreenLayout;
 use crate::visualization::display::responsive_size_utils::{FontSizeClass, ResponsiveExt};
 
@@ -111,28 +110,17 @@ pub fn init_action_buttons(commands: &mut Commands, screen_layout: &ScreenLayout
 pub fn update_button_visuals(
     selected_card: Res<SelectedCard>,
     game_state: Res<crate::gameplay::GameState>,
-    garden_state: Res<crate::gameplay::garden::Garden>,
     mut button_query: Query<(&mut ActionButton, &mut Sprite), With<ButtonSprite>>,
 ) {
-    if selected_card.is_changed() || game_state.is_changed() || garden_state.is_changed() {
+    if selected_card.is_changed() || game_state.is_changed() {
         for (mut button, mut sprite) in button_query.iter_mut() {
             let should_be_enabled = match button.action {
                 ButtonAction::Pass => true, // Always enabled
                 ButtonAction::Discard => selected_card.has_selection(),
                 ButtonAction::Play => {
-                    if let Some(index) = selected_card.get_selected() {
-                        if let Some(card) = game_state.hand.get_card(index) {
-                            if let Some(species_def) = get_species(card.name()) {
-                                garden_state.resources.can_afford(&species_def.daily_consumption)
-                            } else {
-                                false
-                            }
-                        } else {
-                            false
-                        }
-                    } else {
-                        false
-                    }
+                    // In the new lifecycle system, we allow playing any card
+                    // Resource constraints are handled during simulation
+                    selected_card.has_selection()
                 },
             };
             

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use crate::gameplay::garden::resources::{GardenResources, ResourceType};
 use crate::gameplay::species::plants::{get_all_plant_species};
 use crate::gameplay::species::animals::{get_all_animal_species};
 use crate::gameplay::species::fungi::{get_all_fungi_species};
+use crate::gameplay::species::lifecycle_config::*;
 use std::collections::HashMap;
 
 
@@ -29,10 +29,14 @@ pub struct Species {
     pub kingdom: Kingdom,
     pub unlock_round: u32,
     pub max_population: u32,
-    pub survival_requirements: HashMap<ResourceType, (i32, i32)>,
-    pub daily_consumption: HashMap<ResourceType, i32>,
-    pub daily_production: HashMap<ResourceType, i32>,
     pub color: Color,
+    
+    // Lifecycle fields
+    pub feeding_requirements: FeedingRequirements,
+    pub growth_requirements: GrowthRequirements,
+    pub reproduction_requirements: ReproductionRequirements,
+    pub mortality_factors: MortalityFactors,
+    pub biomass_composition: BiomassComposition,
 }
 
 impl Species {
@@ -48,81 +52,46 @@ impl Species {
             kingdom,
             unlock_round,
             max_population,
-            survival_requirements: HashMap::new(),
-            daily_consumption: HashMap::new(),
-            daily_production: HashMap::new(),
             color,
+            // Initialize lifecycle fields with defaults
+            feeding_requirements: FeedingRequirements::default(),
+            growth_requirements: GrowthRequirements::default(),
+            reproduction_requirements: ReproductionRequirements::default(),
+            mortality_factors: MortalityFactors::default(),
+            biomass_composition: match kingdom {
+                Kingdom::Plant | Kingdom::Fungi => BiomassComposition::Plant,
+                Kingdom::Animal => BiomassComposition::Animal,
+            },
         }
     }
 
-    pub fn with_survival_requirement(mut self, resource: ResourceType, min: i32, max: i32) -> Self {
-        self.survival_requirements.insert(resource, (min, max));
+    // Lifecycle configuration methods
+    pub fn with_feeding_requirement(mut self, matter_type: crate::gameplay::lifecycle::MatterType, amount: u32) -> Self {
+        self.feeding_requirements.base_requirements.insert(matter_type, amount);
         self
     }
 
-    pub fn with_daily_consumption(mut self, resource: ResourceType, amount: i32) -> Self {
-        self.daily_consumption.insert(resource, amount);
+    pub fn with_biomass_conversion(mut self, conversion: BiomassConversion) -> Self {
+        self.feeding_requirements.biomass_conversion = conversion;
         self
     }
 
-    pub fn with_daily_production(mut self, resource: ResourceType, amount: i32) -> Self {
-        self.daily_production.insert(resource, amount);
+    pub fn with_growth_age(mut self, minimum_age: u32) -> Self {
+        self.growth_requirements.minimum_age = minimum_age;
+        self
+    }
+
+    pub fn with_reproduction_cooldown(mut self, days: u32) -> Self {
+        self.reproduction_requirements.cooldown_days = days;
+        self
+    }
+
+    pub fn with_lifespan(mut self, min_days: u32, max_days: u32) -> Self {
+        self.mortality_factors.natural_lifespan = (min_days, max_days);
         self
     }
 }
 
-
-#[derive(Clone, Debug)]
-pub struct Creature {
-    pub species: Species,
-}
-
-impl Creature {
-    pub fn new(species: Species) -> Self {
-        Self {
-            species,
-        }
-    }
-
-    pub fn total_daily_consumption(&self) -> HashMap<ResourceType, i32> {
-        let mut total_consumption = HashMap::new();
-        let species_def = &self.species;
-        
-        for (resource_type, amount) in &species_def.daily_consumption {
-            total_consumption.insert(*resource_type, *amount);
-        }
-        
-        total_consumption
-    }
-
-    pub fn total_daily_production(&self) -> HashMap<ResourceType, i32> {
-        let mut total_production = HashMap::new();
-        let species_def = &self.species;
-        
-        for (resource_type, amount) in &species_def.daily_production {
-            total_production.insert(*resource_type, *amount);
-        }
-        
-        total_production
-    }
-
-    pub fn can_survive(&self, resources: &GardenResources) -> bool {
-        let species_def = &self.species;
-        
-        for (resource_type, (min, max)) in &species_def.survival_requirements {
-            let current_level = resources.get_resource(*resource_type);
-            if current_level < *min || current_level > *max {
-                return false;
-            }
-        }
-        
-        true
-    }
-
-    pub fn survival_requirements(&self) -> &HashMap<ResourceType, (i32, i32)> {
-        &self.species.survival_requirements
-    }
-}
 
 pub fn get_species(name: &str) -> Option<&Species> {
     static SPECIES_DEFINITIONS: std::sync::OnceLock<HashMap<&'static str, Species>> = std::sync::OnceLock::new();
