@@ -5,7 +5,7 @@
 The Garden is the central game component that represents the living ecosystem where all species interactions take place. Eden2 features a single unified garden that maintains global resource levels and tracks populations of all living species.
 
 ### Garden Responsibilities
-1. **Resource Tracking**: Maintain current levels of all 8 primary resources
+1. **Resource Tracking**: Maintain current levels of all 6 primary resources
 2. **Population Management**: Track quantity of each species currently in the garden
 3. **Daily Progression**: Apply all species effects at the end of each player turn
 4. **Survival Checking**: Determine which species live, die, or reproduce based on conditions
@@ -13,20 +13,18 @@ The Garden is the central game component that represents the living ecosystem wh
 
 ## Resource Management
 
-The garden maintains 8 core resources organized around fundamental ecosystem cycles. Each resource clearly represents a phase in these cycles, making it intuitive for players to understand ecosystem flow and balance.
+The garden maintains 6 core resources organized around fundamental ecosystem cycles. Each resource clearly represents a phase in these cycles, making it intuitive for players to understand ecosystem flow and balance.
 
 ### Primary Resources
 
 | Resource | Description | Natural Range | Starting Value |
 |----------|-------------|---------------|----------------|
-| **O₂** | Oxygen available for animal respiration | 0-20 | 5 |
-| **CO₂** | Carbon dioxide available for photosynthesis | 0-20 | 8 |
-| **Ground Water** | Available moisture for plant uptake | 0-15 | 6 |
-| **Sunlight** | Solar energy driving photosynthesis | 0-10 | 7 |
-| **Green Vegetation** | Living plant biomass | 0-25 | 3 |
-| **Fruit** | Seeds and reproductive plant matter | 0-15 | 1 |
-| **Soil Nutrients** | Available soil minerals for plant growth | 0-20 | 4 |
-| **Dead Matter** | Decomposing organic material | 0-20 | 3 |
+| **CO₂** | Carbon dioxide available for photosynthesis | 0-20 | 10 |
+| **O₂** | Oxygen available for animal respiration | 0-20 | 10 |
+| **Plant Matter** | Living plant biomass and vegetation | 0-25 | 0 |
+| **Animal Matter** | Living animal biomass and products | 0-20 | 0 |
+| **Dead Matter** | Decomposing organic material | 0-20 | 0 |
+| **Soil Nutrients** | Available soil minerals for plant growth | 0-20 | 5 |
 
 ### Resource Flow and Cycles
 
@@ -41,43 +39,29 @@ The garden maintains 8 core resources organized around fundamental ecosystem cyc
   - *Produced by*: All plants during photosynthesis
   - *Flow*: O₂ → Animals → CO₂ → Plants → O₂
 
-#### **Energy Cycle** (Sunlight → Vegetation → Consumption)
-- **Sunlight**:
-  - *Consumed by*: Plants for photosynthesis energy
-  - *Natural variation*: ±1 daily (weather/seasons)
-  - *Flow*: Sunlight → Plants → Green Vegetation
+#### **Living Matter Cycle** (Biomass → Consumption → Death)
+- **Plant Matter**:
+  - *Produced by*: Plants through photosynthesis and growth
+  - *Consumed by*: Animals feeding on vegetation
+  - *Flow*: CO₂ + Soil Nutrients → Plant Matter → Animal Matter
 
-- **Green Vegetation**:
-  - *Produced by*: Plants converting sunlight into living matter
-  - *Consumed by*: Animals feeding on plant matter
-  - *Flow*: Plant Growth → Animal Consumption → Dead Matter
+- **Animal Matter**:
+  - *Produced by*: Animals through growth and reproduction
+  - *Consumed by*: Predators and scavengers
+  - *Flow*: Plant Matter → Animal Matter → Dead Matter
 
 #### **Nutrient Cycle** (Nutrients → Growth → Death → Decomposition)
 - **Soil Nutrients**:
   - *Consumed by*: Plants for growth and reproduction
   - *Produced by*: Fungi decomposing dead matter
   - *Sources*: Decomposition, nitrogen fixation, natural weathering
-  - *Flow*: Soil Nutrients → Plant Growth → Dead Matter → Decomposition → Soil Nutrients
+  - *Flow*: Soil Nutrients → Plant/Animal Matter → Dead Matter → Decomposition → Soil Nutrients
 
 - **Dead Matter**:
-  - *Produced by*: Animal excretion, plant/animal death, natural decay
+  - *Produced by*: Plant/animal death, waste products, natural decay
   - *Consumed by*: Decomposer fungi and bacteria
   - *Natural increase*: +1 daily from natural decay
   - *Flow*: Living Matter → Death/Waste → Decomposition → Soil Nutrients
-
-#### **Water Cycle** (Moisture Conservation and Recycling)
-- **Ground Water**:
-  - *Consumed by*: Most species for biological processes
-  - *Natural decrease*: -1 daily from evaporation
-  - *Sources*: Precipitation, species recycling
-  - *Flow*: Ground Water → Biological Use → Atmospheric moisture
-
-#### **Reproductive Cycle** (Energy to Seeds)
-- **Fruit**:
-  - *Produced by*: Plants as reproductive matter
-  - *Consumed by*: Frugivore animals for nutrition
-  - *Function*: Provides concentrated energy for animals, enables plant reproduction
-  - *Flow*: Plant Energy → Fruit Production → Animal Nutrition
 
 ### Resource Dynamics and Player Strategy
 
@@ -85,9 +69,9 @@ The garden maintains 8 core resources organized around fundamental ecosystem cyc
 Players should understand immediate feedback on cycle health:
 
 - **Atmospheric Balance**: CO₂/O₂ ratio indicator (ideal: 1.5-2.0)
-- **Energy Flow**: Sunlight → Green Vegetation conversion efficiency
+- **Living Matter Flow**: Plant Matter → Animal Matter conversion efficiency
 - **Nutrient Circulation**: Dead Matter → Soil Nutrients decomposition rate
-- **Water Conservation**: Ground Water availability and retention
+- **Biomass Balance**: Total living matter vs. dead matter ratios
 
 #### **Critical Thresholds and Warning Signs**
 - **Cycle Stagnation**: When any cycle stops flowing (e.g., no decomposers to process dead matter)
@@ -106,6 +90,11 @@ Player sees: Soil Nutrients: 1, Dead Matter: 15 (Nutrient cycle stagnated)
 → Diagnosis: Decomposition bottleneck
 → Solution: Add decomposer species
 → Card Choice: Select rapid decomposers like Earthworms or Mold Clusters
+
+Player sees: Plant Matter: 2, Animal Matter: 8 (Living matter imbalanced)
+→ Diagnosis: Too many animals, not enough plants to sustain them
+→ Solution: Add more plant species or reduce animal populations
+→ Card Choice: Select fast-growing plants or remove some animal cards
 ```
 
 ## Species Population Mechanics
@@ -133,13 +122,11 @@ At the end of each player turn, the garden advances one day through a structured
 
 #### Phase 1: Environmental Effects
 1. **Natural Resource Changes**:
-   - Sunlight: Random variation ±1
-   - Fresh Water: -1 (evaporation)
-   - Organic Waste: +1 (natural accumulation)
+   - Dead Matter: +1 (natural decay and accumulation)
 
 2. **Random Events** (future feature):
-   - Weather variations
-   - Seasonal changes
+   - Weather variations affecting atmospheric gases
+   - Seasonal changes affecting plant/animal cycles
    - Natural disasters
 
 #### Phase 2: Species Survival Check
@@ -182,34 +169,32 @@ For each species in optimal conditions:
 
 **Starting State**:
 ```
-Resources: O₂:6, CO₂:5, Ground Water:4, Sunlight:6, Green Vegetation:3, Fruit:1, Soil Nutrients:5, Dead Matter:2
+Resources: CO₂:8, O₂:5, Plant Matter:3, Animal Matter:2, Dead Matter:3, Soil Nutrients:4
 Species: Grass:2, Rabbits:1, Rot Fungi:1
 ```
 
 **Phase 1 - Environmental**:
 ```
-Sunlight: 6 → 7 (random +1)
-Ground Water: 4 → 3 (evaporation -1)
-Dead Matter: 2 → 3 (natural accumulation +1)
+Dead Matter: 3 → 4 (natural accumulation +1)
 ```
 
 **Phase 2 - Survival Check**:
 ```
-Grass: O₂:6, CO₂:5, Ground Water:3, Sunlight:7 - All within range ✓
-Rabbits: O₂:6, Green Vegetation:3, Ground Water:3 - All within range ✓
-Rot Fungi: Dead Matter:3, Ground Water:3, O₂:6 - All within range ✓
+Grass: CO₂:8, Soil Nutrients:4 - All within range ✓
+Rabbits: O₂:5, Plant Matter:3 - All within range ✓
+Rot Fungi: Dead Matter:4 - All within range ✓
 ```
 
 **Phase 3 - Species Effects**:
 ```
-Grass (2 pop): Consumes 2 CO₂, 2 Sunlight, 2 Ground Water → Produces 4 O₂, 2 Green Vegetation
-Rabbits (1 pop): Consumes 1 O₂, 2 Green Vegetation, 1 Ground Water → Produces 1 CO₂, 1 Dead Matter
-Rot Fungi (1 pop): Consumes 2 Dead Matter, 1 Ground Water → Produces 1 CO₂, 2 Soil Nutrients
+Grass (2 pop): Consumes 2 CO₂, 2 Soil Nutrients → Produces 4 O₂, 2 Plant Matter
+Rabbits (1 pop): Consumes 1 O₂, 2 Plant Matter → Produces 1 CO₂, 1 Animal Matter, 1 Dead Matter
+Rot Fungi (1 pop): Consumes 2 Dead Matter → Produces 1 CO₂, 2 Soil Nutrients
 ```
 
 **Final State**:
 ```
-Resources: O₂:9, CO₂:4, Ground Water:0, Sunlight:5, Green Vegetation:3, Fruit:1, Soil Nutrients:7, Dead Matter:2
+Resources: CO₂:7, O₂:8, Plant Matter:3, Animal Matter:3, Dead Matter:3, Soil Nutrients:4
 Species: Grass:2, Rabbits:1, Rot Fungi:1
 ```
 

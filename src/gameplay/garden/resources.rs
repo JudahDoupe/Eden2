@@ -5,65 +5,35 @@ use std::collections::HashMap;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum ResourceType {
-    // Basic resources
-    GroundWater,
-    Sunlight,
-    SoilNutrients,
-    // Atmospheric gases
     CO2,
     O2,
-    // Living matter
-    GreenVegetation,
-    Fruit,
+    PlantMatter,
+    AnimalMatter,
     DeadMatter,
+    SoilNutrients,
 }
 
 impl ResourceType {
     pub fn name(&self) -> &'static str {
         match self {
-            ResourceType::GroundWater => "Ground Water",
-            ResourceType::Sunlight => "Sunlight",
-            ResourceType::SoilNutrients => "Soil Nutrients",
-            ResourceType::CO2 => "CO₂",
-            ResourceType::O2 => "O₂",
-            ResourceType::GreenVegetation => "Green Vegetation",
-            ResourceType::Fruit => "Fruit",
+            ResourceType::CO2 => "CO2",
+            ResourceType::O2 => "O2",
+            ResourceType::PlantMatter => "Plant Matter",
+            ResourceType::AnimalMatter => "Animal Matter",
             ResourceType::DeadMatter => "Dead Matter",
+            ResourceType::SoilNutrients => "Soil Nutrients",
         }
     }
 
     pub fn all() -> Vec<ResourceType> {
         vec![
-            ResourceType::GroundWater,
-            ResourceType::Sunlight,
-            ResourceType::SoilNutrients,
             ResourceType::CO2,
             ResourceType::O2,
-            ResourceType::GreenVegetation,
-            ResourceType::Fruit,
+            ResourceType::PlantMatter,
+            ResourceType::AnimalMatter,
             ResourceType::DeadMatter,
+            ResourceType::SoilNutrients,
         ]
-    }
-
-    /// Returns true if this resource should reset to its base value each day
-    /// (renewable resources like sunlight, vs finite resources like nutrients)
-    pub fn is_renewable(&self) -> bool {
-        match self {
-            ResourceType::Sunlight => true,
-            ResourceType::CO2 => true,
-            ResourceType::O2 => true,
-            _ => false,
-        }
-    }
-
-    /// Returns the daily renewable amount for renewable resources
-    pub fn daily_renewable_amount(&self) -> i32 {
-        match self {
-            ResourceType::Sunlight => 5,
-            ResourceType::CO2 => 10,
-            ResourceType::O2 => 10,
-            _ => 0,
-        }
     }
 }
 
@@ -78,14 +48,12 @@ pub struct GardenResources {
 impl Default for GardenResources {
     fn default() -> Self {
         let mut resources = HashMap::new();
-        resources.insert(ResourceType::GroundWater, 5);
-        resources.insert(ResourceType::Sunlight, 5);
-        resources.insert(ResourceType::SoilNutrients, 5);
         resources.insert(ResourceType::CO2, 10);
         resources.insert(ResourceType::O2, 10);
-        resources.insert(ResourceType::GreenVegetation, 0);
-        resources.insert(ResourceType::Fruit, 0);
+        resources.insert(ResourceType::PlantMatter, 0);
+        resources.insert(ResourceType::AnimalMatter, 0);
         resources.insert(ResourceType::DeadMatter, 0);
+        resources.insert(ResourceType::SoilNutrients, 5);
         
         Self { resources }
     }

@@ -65,7 +65,7 @@ impl Species {
         self
     }
 
-    pub fn wioth_daily_production(mut self, resource: ResourceType, amount: i32) -> Self {
+    pub fn with_daily_production(mut self, resource: ResourceType, amount: i32) -> Self {
         self.daily_production.insert(resource, amount);
         self
     }

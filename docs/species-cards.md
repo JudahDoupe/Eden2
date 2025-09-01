@@ -14,17 +14,17 @@ Eden2 features 30 unique species cards divided across three kingdoms that mainta
 ### Primary Resource Cycles
 
 **Plants** (Producers)
-- **Consume**: CO₂, Sunlight, Soil Nutrients, Ground Water
-- **Produce**: O₂, Green Vegetation, (some produce Fruit)
-- **Role**: Foundation of the ecosystem, convert basic resources into usable energy
+- **Consume**: CO₂, Soil Nutrients
+- **Produce**: O₂, Plant Matter
+- **Role**: Foundation of the ecosystem, convert CO₂ and nutrients into biomass
 
 **Animals** (Consumers)
-- **Consume**: O₂, Green Vegetation, Fruit, (some consume other animals)
-- **Produce**: CO₂, Dead Matter
-- **Role**: Convert plant matter into nutrients, provide pollination and seed dispersal
+- **Consume**: O₂, Plant Matter, Animal Matter
+- **Produce**: CO₂, Animal Matter, Dead Matter
+- **Role**: Convert plant matter into animal biomass, create waste products
 
 **Fungi** (Decomposers)
-- **Consume**: Dead Matter, (some consume living matter)
+- **Consume**: Dead Matter
 - **Produce**: Soil Nutrients, CO₂
 - **Role**: Recycle nutrients back into the ecosystem, break down organic waste
 
@@ -59,14 +59,12 @@ During the garden progression phase, each living species:
 **Max Population**: 5
 
 **Survival Requirements**:
-- Sunlight: 2-8
-- Ground Water: 1-6
-- Soil Nutrients: 1-5
 - CO₂: 1-10
+- Soil Nutrients: 1-5
 
 **Daily Effects** (per population):
-- Consumes: 1 CO₂, 1 Sunlight, 1 Ground Water
-- Produces: 2 O₂, 1 Green Vegetation
+- Consumes: 1 CO₂, 1 Soil Nutrients
+- Produces: 2 O₂, 1 Plant Matter
 
 *"Hardy grass that forms the foundation of many ecosystems."*
 
@@ -78,16 +76,14 @@ During the garden progression phase, each living species:
 **Max Population**: 3
 
 **Survival Requirements**:
-- Sunlight: 3-7
-- Ground Water: 2-6
+- CO₂: 1-8
 - Soil Nutrients: 2-6
-- O₂: 2-8
 
 **Daily Effects** (per population):
-- Consumes: 1 CO₂, 2 Sunlight, 2 Soil Nutrients
-- Produces: 1 O₂, 2 Fruit, 1 Green Vegetation
+- Consumes: 1 CO₂, 2 Soil Nutrients
+- Produces: 1 O₂, 2 Plant Matter
 
-*"Sweet berries attract animals and provide vital nutrition."*
+*"Sweet berries that provide vital nutrition and attract animals."*
 
 ---
 
@@ -97,17 +93,15 @@ During the garden progression phase, each living species:
 **Max Population**: 4
 
 **Survival Requirements**:
-- Sunlight: 4-8
-- Ground Water: 1-5
-- Soil Nutrients: 1-4
 - CO₂: 1-8
+- Soil Nutrients: 1-4
 
 **Daily Effects** (per population):
-- Consumes: 1 CO₂, 1 Sunlight, 1 Ground Water
-- Produces: 1 O₂, 1 Green Vegetation
+- Consumes: 1 CO₂, 1 Soil Nutrients
+- Produces: 1 O₂, 1 Plant Matter
 - Special: +1 reproduction chance for all Animal species
 
-*"Colorful flowers that support insect populations."*
+*"Colorful flowers that support animal populations."*
 
 ---
 
@@ -258,12 +252,11 @@ During the garden progression phase, each living species:
 
 **Survival Requirements**:
 - O₂: 2-8
-- Green Vegetation: 2-8
-- Ground Water: 1-6
+- Plant Matter: 2-8
 
 **Daily Effects** (per population):
-- Consumes: 1 O₂, 2 Green Vegetation, 1 Ground Water
-- Produces: 1 CO₂, 1 Dead Matter
+- Consumes: 1 O₂, 2 Plant Matter
+- Produces: 1 CO₂, 1 Animal Matter, 1 Dead Matter
 
 *"Quick-breeding herbivores that convert plant matter efficiently."*
 
@@ -277,10 +270,9 @@ During the garden progression phase, each living species:
 **Survival Requirements**:
 - O₂: 1-5
 - Dead Matter: 1-6
-- Ground Water: 2-8
 
 **Daily Effects** (per population):
-- Consumes: 1 O₂, 2 Dead Matter, 1 Ground Water
+- Consumes: 1 O₂, 2 Dead Matter
 - Produces: 1 CO₂, 3 Soil Nutrients
 - Special: Accelerates nutrient cycle - doubles Soil Nutrient production from Dead Matter
 
@@ -295,11 +287,10 @@ During the garden progression phase, each living species:
 
 **Survival Requirements**:
 - O₂: 2-8
-- Fruit: 1-4
-- Sunlight: 3-8
+- Plant Matter: 1-4
 
 **Daily Effects** (per population):
-- Consumes: 1 O₂, 1 Fruit
+- Consumes: 1 O₂, 1 Plant Matter
 - Produces: 1 CO₂
 - Special: +2 reproduction chance for all Plant species
 
@@ -448,11 +439,10 @@ During the garden progression phase, each living species:
 
 **Survival Requirements**:
 - Dead Matter: 2-8
-- Ground Water: 2-7
 - O₂: 0-4 (prefers low oxygen)
 
 **Daily Effects** (per population):
-- Consumes: 2 Dead Matter, 1 Ground Water
+- Consumes: 2 Dead Matter
 - Produces: 1 CO₂, 2 Soil Nutrients
 
 *"Essential decomposers that break down dead organic matter."*
@@ -467,7 +457,6 @@ During the garden progression phase, each living species:
 **Survival Requirements**:
 - Dead Matter: 1-5
 - Soil Nutrients: 2-6
-- Ground Water: 1-5
 
 **Daily Effects** (per population):
 - Consumes: 1 Dead Matter, 1 Soil Nutrients
@@ -486,12 +475,11 @@ During the garden progression phase, each living species:
 **Survival Requirements**:
 - Dead Matter: 3-8
 - Soil Nutrients: 3-7
-- Ground Water: 3-7
-- Sunlight: 0-3 (prefers shade)
+- O₂: 0-3 (prefers low oxygen)
 
 **Daily Effects** (per population):
 - Consumes: 3 Dead Matter, 2 Soil Nutrients
-- Produces: 2 CO₂, 4 Soil Nutrients, 1 Fruit
+- Produces: 2 CO₂, 4 Soil Nutrients
 - Special: Creates microhabitat - increases survival range for all other Fungi by +1
 
 *"Massive ecosystem engineers that create favorable conditions for other fungi."*
@@ -637,35 +625,26 @@ During the garden progression phase, each living species:
 
 **Carbon Cycle** (CO₂ ↔ O₂):
 - **Heavy CO₂ Consumers**: Pine Trees (3 CO₂), Clover (2 CO₂), Oak Saplings (2 CO₂), Sunflowers (2 CO₂)
-- **Standard CO₂ Consumers**: Grass, Wildflowers, Ferns, Moss, Berry Bushes, Vegetable Plants
+- **Standard CO₂ Consumers**: Most plants (1 CO₂ per population)
 - **Heavy O₂ Producers**: Pine Trees (4 O₂), Oak Saplings (4 O₂), Sunflowers (3 O₂)
 - **O₂ to CO₂ Converters**: All animals consume O₂, produce CO₂
-- **CO₂ Amplifiers**: Frogs (2 CO₂), Giant Mushrooms (2 CO₂), Yeast Colonies (2 CO₂)
+- **CO₂ Amplifiers**: Giant Mushrooms (2 CO₂), Yeast Colonies (2 CO₂)
 
-**Nutrient Cycle** (Soil Nutrients → Vegetation → Dead Matter → Soil Nutrients):
+**Living Matter Cycle** (Plant Matter ↔ Animal Matter):
+- **Plant Matter Sources**: All plants produce Plant Matter through photosynthesis
+- **Plant Matter Consumers**: Herbivorous animals convert Plant Matter to Animal Matter
+- **Animal Matter Sources**: Animals produce Animal Matter through growth
+- **Animal Matter Consumers**: Carnivorous animals and decomposers
+
+**Nutrient Cycle** (Soil Nutrients → Growth → Dead Matter → Soil Nutrients):
 - **Soil Nutrient Sources**: 
-  - *From Dead Matter*: Earthworms (3x), Mold Clusters (2x), Giant Mushrooms (4x), Rot Fungi, Coral Fungi
+  - *From Dead Matter*: Earthworms (3x), Mold Clusters (2x), Giant Mushrooms (4x), Rot Fungi
   - *From Atmosphere*: Clover (atmospheric nitrogen fixing)
-  - *Plant Partnerships*: Mycorrhizal Fungi boost plant nutrient production
-- **Vegetation Producers**: All plants create Green Vegetation
-- **Dead Matter Creators**: All animals produce Dead Matter when they die or excrete
+- **Dead Matter Creators**: All animals produce Dead Matter through waste and death
 - **Cycle Accelerators**: 
   - Earthworms (2x Dead Matter → 3x Soil Nutrients)
-  - Frogs (Living Vegetation → Dead Matter)
+  - Frogs (Living Matter → Dead Matter)
   - Mold Clusters (rapid nutrient cycling)
-
-**Water Cycle** (Conservation and Recycling):
-- **Water Conservers**: Moss (prevents evaporation)
-- **Water Recyclers**: Ferns (atmospheric humidity), Snails (soil moisture)
-- **Heavy Water Users**: Ferns (3 water), Snails (2 water), most fungi
-- **Water Sources**: Natural precipitation (garden system), species recycling
-
-**Energy Flow** (Sunlight → Chemical Energy → Heat):
-- **Primary Producers**: Plants convert sunlight to chemical energy (vegetation/fruit)
-- **Primary Consumers**: Herbivores convert plant matter to animal energy
-- **Secondary Consumers**: Some animals consume other animals or animal products
-- **Decomposers**: Fungi extract remaining energy from dead organic matter
-- **Energy Amplifiers**: Bees and pollinators increase plant reproduction efficiency
 
 ### Strategic Considerations
 
@@ -687,12 +666,12 @@ During the garden progression phase, each living species:
 4. **Cycle Management**:
    - **Carbon Imbalance**: Too much CO₂? Add more plants. Too little? Add more animals/fungi
    - **Soil Nutrient Shortage**: Boost decomposers (Earthworms, Mold) or nitrogen fixers (Clover)
-   - **Water Stress**: Add conservers (Moss) and recyclers (Ferns, Snails)
-   - **Energy Bottlenecks**: Ensure adequate sunlight for plants, add energy-efficient species
+   - **Living Matter Imbalance**: Too much Plant Matter? Add herbivores. Too much Animal Matter? Add carnivores/decomposers
+   - **Dead Matter Accumulation**: Add more decomposer fungi to process organic waste
 
 5. **Kingdom Balance Ratios**:
-   - **Plants**: 40-50% of species (energy foundation)
-   - **Animals**: 25-35% of species (energy transfer and pollination)
+   - **Plants**: 40-50% of species (CO₂ processing, Plant Matter foundation)
+   - **Animals**: 25-35% of species (O₂ processing, matter conversion)
    - **Fungi**: 20-30% of species (nutrient recycling and ecosystem engineering)
 
-This ecosystem creates emergent gameplay where players must understand and manage complex interdependencies between species and resources, with each cycle requiring careful balance to prevent collapse while maximizing efficiency.
+This simplified ecosystem creates emergent gameplay where players must understand and manage fundamental interdependencies between CO₂/O₂ cycles, living matter flows, and nutrient recycling. Each cycle requires careful balance to prevent collapse while maximizing efficiency through the three core kingdoms.
