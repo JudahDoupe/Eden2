@@ -4,7 +4,7 @@ use rand::thread_rng;
 use super::card::Card;
 use crate::gameplay::species::plants::get_plant_tier_1;
 use crate::gameplay::species::animals::get_animal_tier_1;
-use crate::gameplay::species::fungi::get_fungi_tier_1;
+use crate::gameplay::species::decomposers::get_fungi_tier_1;
 
 /// Deck resource for managing the collection of cards available to draw from
 #[derive(Resource, Clone)]

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::gameplay::species::plants::{get_all_plant_species};
 use crate::gameplay::species::animals::{get_all_animal_species};
-use crate::gameplay::species::fungi::{get_all_fungi_species};
+use crate::gameplay::species::decomposers::{get_all_fungi_species};
 use crate::gameplay::species::lifecycle_config::*;
 use std::collections::HashMap;
 
