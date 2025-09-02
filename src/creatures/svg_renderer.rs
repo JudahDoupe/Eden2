@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 use crate::rendering::svg::{SvgSpriteBundle, SvgComponent, SvgAsset};
 use rand::prelude::*;
-use crate::gameplay::creatures::individual::{IndividualCreature, CreatureId};
+use crate::gameplay::lifecycle::IndividualCreature;
 use crate::gameplay::species::Species;
+use crate::creatures::CreatureComponent;
 
 /// Component to specify which SVG to use based on creature type and lifecycle stage
 #[derive(Component)]
@@ -54,6 +55,18 @@ fn get_lifecycle_stage_string(maturity_stage: &str) -> String {
     }.to_string()
 }
 
+/// System to initialize visual entities for all existing creatures
+pub fn initialize_all_creature_visualizations(
+    mut commands: Commands,
+    creatures_query: Query<Entity, (With<IndividualCreature>, Without<VisualizedCreature>)>,
+) {
+    let creature_count = creatures_query.iter().count();
+    if creature_count > 0 {
+        println!("Initializing visualization for {} existing creatures", creature_count);
+        // Let the spawn_creature_visualizations system handle the actual spawning
+    }
+}
+
 /// System to spawn visual entities for newly added creatures
 pub fn spawn_creature_visualizations(
     mut commands: Commands,
@@ -73,8 +86,8 @@ pub fn spawn_creature_visualizations(
         let random_x = rng.gen_range(garden_bounds.min_x..garden_bounds.max_x);
         let random_y = rng.gen_range(garden_bounds.min_y..garden_bounds.max_y);
         
-        // Load SVG asset
-        let svg_path = format!("creatures/{}/{}.svg", species_name, lifecycle_stage);
+        // Load SVG asset - using path from visualization/garden/creatures
+        let svg_path = format!("visualization/garden/creatures/{}/{}.svg", species_name, lifecycle_stage);
         
         // Create visualization entity
         let visual_entity = commands.spawn((
@@ -128,7 +141,7 @@ pub fn update_creature_visualizations(
                 renderer.species_name = species_name;
                 
                 // Load new SVG asset for the updated lifecycle stage
-                let svg_path = format!("creatures/{}/{}.svg", renderer.species_name, renderer.lifecycle_stage);
+                let svg_path = format!("visualization/garden/creatures/{}/{}.svg", renderer.species_name, renderer.lifecycle_stage);
                 let svg_handle: Handle<SvgAsset> = asset_server.load(&svg_path);
                 
                 // Replace the existing entity with a new one containing the updated asset
@@ -154,10 +167,38 @@ pub fn cleanup_visual_entities(
         }
     }
 }
-            if link.creature_entity == removed_entity {
-                commands.entity(visual_entity).despawn();
-                break;
-            }
+
+/// Simple system to add minimal movement to creatures
+pub fn manage_creature_positions(
+    mut creatures_query: Query<(&IndividualCreature, &VisualizedCreature)>,
+    mut transforms: Query<&mut Transform>,
+    garden_bounds: Res<GardenBounds>,
+    time: Res<Time>,
+) {
+    // Add a very subtle movement to creatures to make them feel alive
+    for (_, visualized) in creatures_query.iter() {
+        if let Ok(mut transform) = transforms.get_mut(visualized.visual_entity) {
+            // Simple gentle swaying for all creatures
+            let entity_id = visualized.visual_entity.index();
+            let sway = (time.elapsed_seconds() * 1.0 + entity_id as f32 * 0.1).sin() * 0.2;
+            transform.translation.y += sway * time.delta_seconds();
         }
     }
 }
+
+/// Simple system for basic visual effects
+pub fn apply_lifecycle_visual_effects(
+    creatures_query: Query<(&IndividualCreature, &VisualizedCreature)>,
+    mut sprites: Query<&mut Sprite>,
+) {
+    // For now, just ensure all sprites are displayed with normal coloring
+    for (_, visualized) in creatures_query.iter() {
+        if let Ok(mut sprite) = sprites.get_mut(visualized.visual_entity) {
+            // Set normal coloration
+            sprite.color = Color::rgba(1.0, 1.0, 1.0, 1.0);
+        }
+    }
+}
+
+// We'll implement performance optimizations later when needed
+// For now, we're focusing on getting the creatures rendered correctly

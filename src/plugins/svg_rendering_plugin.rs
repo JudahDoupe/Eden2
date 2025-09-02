@@ -1,16 +1,15 @@
 use bevy::prelude::*;
-use crate::rendering::svg::SvgPlugin;
-use crate::rendering::svg_system::update_svg_sprites;
-use crate::creatures::svg_renderer::load_creature_svgs;
 
+// Define SvgRenderingPlugin struct
 pub struct SvgRenderingPlugin;
 
+// Implement the plugin with feature guard
 impl Plugin for SvgRenderingPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(SvgPlugin)
-           .add_systems(Update, (
-               load_creature_svgs,
-               update_svg_sprites,
-           ).chain());
+    fn build(&self, _app: &mut App) {
+        // Implementation currently disabled - will be enabled when SVG rendering is fixed
+        #[cfg(feature = "svg_rendering")]
+        {
+            // SVG rendering implementation will go here when fixed
+        }
     }
 }

@@ -1,10 +1,12 @@
 use bevy::prelude::*;
 use bevy::asset::{AssetLoader, LoadContext, LoadedAsset};
-use bevy::utils::BoxedFuture;
+use bevy::reflect::TypePath;
 use std::io::Cursor;
+use bevy::utils::BoxedFuture;
+use std::io::Error as IoError;
 
 /// Asset representation of a loaded SVG
-#[derive(Debug, TypePath)]
+#[derive(Debug, TypePath, Asset, Clone)]
 pub struct SvgAsset {
     pub size: Vec2,
     pub texture: Handle<Image>,
@@ -15,11 +17,16 @@ pub struct SvgAsset {
 pub struct SvgAssetLoader;
 
 impl AssetLoader for SvgAssetLoader {
+    type Asset = SvgAsset;
+    type Settings = ();
+    type Error = IoError;
+
     fn load<'a>(
         &'a self,
         bytes: &'a [u8],
         load_context: &'a mut LoadContext,
-    ) -> BoxedFuture<'a, Result<(), bevy::asset::Error>> {
+        _settings: &'a Self::Settings,
+    ) -> BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
         Box::pin(async move {
             // Parse SVG data
             let opt = usvg::Options::default();

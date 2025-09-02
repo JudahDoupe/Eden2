@@ -89,21 +89,25 @@ pub fn update_species_display(
     mut text_query: Query<&mut Text2d, With<SpeciesDisplayText>>,
 ) {
     if ecosystem_state.is_changed() {
-        let mut species_text = String::from("Species:");
+        let mut species_text = String::from("Species Present:");
         
         if ecosystem_state.creatures.is_empty() {
             species_text.push_str("\nNo species yet");
         } else {
-            // Group creatures by species and count them
-            for (species_name, count) in &ecosystem_state.living_population_by_species {
-                if *count > 0 {
-                    species_text.push_str(&format!("\n{}: {}", species_name, count));
-                }
+            // Just show which species are present, not counts
+            let unique_species: Vec<_> = ecosystem_state.living_population_by_species
+                .iter()
+                .filter(|(_, &count)| count > 0)
+                .map(|(name, _)| name)
+                .collect();
+                
+            for species_name in unique_species {
+                species_text.push_str(&format!("\n- {}", species_name));
             }
             
-            // Show total creature count
+            // Optional: Show total without details
             let total_creatures = ecosystem_state.living_creatures().count();
-            species_text.push_str(&format!("\nTotal: {} creatures", total_creatures));
+            species_text.push_str(&format!("\n({} total creatures)", total_creatures));
         }
         
         if let Ok(mut text) = text_query.single_mut() {

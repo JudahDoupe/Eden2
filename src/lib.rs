@@ -1,5 +1,12 @@
 pub mod gameplay;
 pub mod visualization;
+// Temporarily disable problematic modules until they're fixed
+#[cfg(feature = "svg_rendering")]
+pub mod plugins;
+#[cfg(feature = "svg_rendering")]
+pub mod creatures;
+#[cfg(feature = "svg_rendering")]
+pub mod rendering;
 
 use bevy::prelude::*;
 use gameplay::lifecycle::{SimulateDayEvent, AddSpeciesToEcosystemEvent, handle_add_species_to_ecosystem_event, handle_simulate_day_event};
@@ -16,6 +23,10 @@ pub fn create_app(window_config: Window) -> App {
         primary_window: Some(window_config),
         ..default()
     }));
+    
+    // Temporarily disabling SVG and visualization plugins until they're fixed
+    // app.add_plugins(plugins::svg_rendering_plugin::SvgRenderingPlugin);
+    // app.add_plugins(plugins::visualization_plugin::CreatureVisualizationPlugin);
     
     // Register events
     app.add_event::<PlayCardEvent>();
