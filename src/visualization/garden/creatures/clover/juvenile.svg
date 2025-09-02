@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+
+  <!-- Stem - thinner and lighter green -->
+  <line x1="200" y1="200" x2="200" y2="300" stroke="#8abf5f" stroke-width="16" stroke-linecap="round" />
+</svg>

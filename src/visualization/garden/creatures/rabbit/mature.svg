@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+  <!-- Body -->
+  <line x1="125" y1="200" x2="295" y2="200" stroke="#aaa" stroke-width="80" stroke-linecap="round" />
+  
+  <!-- Head -->
+  <line x1="255" y1="130" x2="315" y2="130" stroke="#ddd" stroke-width="70" stroke-linecap="round" />
+  
+  <!-- Eye -->
+  <circle cx="290" cy="120" r="10" fill="black" />
+  
+  <!-- Ear -->
+  <line x1="240" y1="110" x2="210" y2="170" stroke="#ddd" stroke-width="37" stroke-linecap="round" />
+  
+  <!-- Tail -->
+  <line x1="105" y1="170" x2="115" y2="170" stroke="#ddd" stroke-width="40" stroke-linecap="round" />
+  
+  <!-- Feet -->
+  <line x1="120" y1="230" x2="160" y2="230" stroke="#ddd" stroke-width="67.5" stroke-linecap="round" />
+  <line x1="105" y1="247.625" x2="182" y2="247.625" stroke="#ddd" stroke-width="33.75" stroke-linecap="round" />
+  <line x1="290" y1="230" x2="305" y2="245" stroke="#ddd" stroke-width="33.75" stroke-linecap="round" />
+</svg>

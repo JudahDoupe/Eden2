@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+  <!-- spores -->
+  <circle cx="140" cy="180" r="10" fill="purple" />
+  <circle cx="150" cy="220" r="15" fill="purple" />
+  <circle cx="200" cy="250" r="20" fill="purple" />
+  <circle cx="240" cy="190" r="6" fill="purple" />
+  <circle cx="280" cy="230" r="12" fill="purple" />
+</svg>

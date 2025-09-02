@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+  <!-- Define reusable elements -->
+  <defs>
+    <!-- Single leaf definition - rounded ends -->
+    <path id="leaf" d="M200,200 C175,175 155,155 175,135 C195,115 205,115 225,135 C245,155 225,175 200,200" fill="#a4bd57" />
+  </defs>
+  
+  <!-- Stem -->
+  <line x1="200" y1="200" x2="200" y2="300" stroke="#6a7b45" stroke-width="24" stroke-linecap="round" />
+  
+  <!-- Reuse the leaf pattern with different rotations -->
+  <use href="#leaf" transform="rotate(55, 200, 200)" />
+  <use href="#leaf" transform="rotate(145, 200, 200)" />
+  <use href="#leaf" transform="rotate(235, 200, 200)" />
+  <use href="#leaf" transform="rotate(325, 200, 200)" />
+</svg>
